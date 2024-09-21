@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Trades>
+    <Trade>
+        <TradeID>1001</TradeID>
+        <TradeDate>2023-10-01</TradeDate>
+        <Security>AAPL</Security>
+        <Quantity>100</Quantity>
+        <Price>150.25</Price>
+        <BuySell>Buy</BuySell>
+        <Counterparty>BrokerA</Counterparty>
+    </Trade>
+    <Trade>
+        <TradeID>1002</TradeID>
+        <TradeDate>2023-10-02</TradeDate>
+        <Security>GOOGL</Security>
+        <Quantity>50</Quantity>
+        <Price>2750.50</Price>
+        <BuySell>Sell</BuySell>
+        <Counterparty>BrokerB</Counterparty>
+    </Trade>
+    <Trade>
+        <TradeID>1003</TradeID>
+        <TradeDate>2023-10-03</TradeDate>
+        <Security>AMZN</Security>
+        <Quantity>20</Quantity>
+        <Price>3400.00</Price>
+        <BuySell>Buy</BuySell>
+        <Counterparty>BrokerC</Counterparty>
+    </Trade>
+</Trades>

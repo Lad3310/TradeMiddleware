@@ -87,14 +87,22 @@ def process_xml_data(xml_content):
     try:
         root = etree.fromstring(xml_content)
         data = []
-        for trade in root.findall('trade'):
+        for trade in root.findall('Trade'):
             try:
                 trade_data = {
-                    'trade_id': trade.find('trade_id').text,
-                    'symbol': trade.find('symbol').text,
-                    'quantity': int(trade.find('quantity').text),
-                    'price': float(trade.find('price').text)
+                    'trade_id': trade.find('TradeID').text if trade.find('TradeID') is not None else None,
+                    'symbol': trade.find('Security').text if trade.find('Security') is not None else None,
+                    'quantity': int(trade.find('Quantity').text) if trade.find('Quantity') is not None else None,
+                    'price': float(trade.find('Price').text) if trade.find('Price') is not None else None
                 }
+                
+                # Check for missing required fields
+                missing_fields = [field for field, value in trade_data.items() if value is None]
+                if missing_fields:
+                    logging.warning(f"Trade is missing required fields: {', '.join(missing_fields)}")
+                    logging.warning(f"Skipping trade: {etree.tostring(trade).decode()}")
+                    continue
+                
                 data.append(trade_data)
             except AttributeError as e:
                 logging.error(f"Error parsing trade element: {e}")
@@ -114,3 +122,4 @@ def process_xml_data(xml_content):
     except Exception as e:
         logging.error(f"Unexpected error processing XML data: {e}")
         raise ValueError(f"Error processing XML data: {e}")
+
