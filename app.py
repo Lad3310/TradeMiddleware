@@ -57,16 +57,19 @@ def register():
             new_user = User(username=username, password=generate_password_hash(password))
             db.session.add(new_user)
             db.session.commit()
+            logging.info(f"User {username} registered successfully")
             flash('Account created successfully')
             return redirect(url_for('login'))
         except SQLAlchemyError as e:
             db.session.rollback()
-            logging.error(f"Database error during registration: {str(e)}")
-            flash('An error occurred during registration. Please try again later.')
+            error_msg = str(e)
+            logging.error(f"Database error during registration: {error_msg}")
+            flash(f'An error occurred during registration: {error_msg}. Please try again later.')
         except Exception as e:
             db.session.rollback()
-            logging.error(f"Unexpected error during registration: {str(e)}")
-            flash('An unexpected error occurred. Please try again later.')
+            error_msg = str(e)
+            logging.error(f"Unexpected error during registration: {error_msg}")
+            flash(f'An unexpected error occurred: {error_msg}. Please try again later.')
     
     return render_template('register.html')
 
