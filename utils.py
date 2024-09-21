@@ -5,7 +5,7 @@ from datetime import datetime
 from lxml import etree
 import traceback
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -86,13 +86,13 @@ def simulate_external_api_call(trade_data):
 def process_xml_data(xml_content):
     logging.info("Starting XML data processing")
     try:
-        logging.info("Parsing XML content")
+        logging.debug(f"Raw XML content: {xml_content[:200]}...")  # Log first 200 characters of XML content
         root = etree.fromstring(xml_content)
         logging.info(f"XML root element: {root.tag}")
         
         data = []
         for trade in root.findall('Trade'):
-            logging.info(f"Processing trade element: {etree.tostring(trade).decode()}")
+            logging.debug(f"Processing trade element: {etree.tostring(trade).decode()}")
             try:
                 trade_data = {
                     'trade_id': trade.find('TradeID').text if trade.find('TradeID') is not None else None,
@@ -108,7 +108,7 @@ def process_xml_data(xml_content):
                     logging.warning(f"Skipping trade: {etree.tostring(trade).decode()}")
                     continue
                 
-                logging.info(f"Processed trade data: {trade_data}")
+                logging.debug(f"Processed trade data: {trade_data}")
                 data.append(trade_data)
             except AttributeError as e:
                 logging.error(f"Error parsing trade element: {e}")

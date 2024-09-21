@@ -143,6 +143,15 @@ def upload_file():
             logging.error(f"Error processing file {file.filename}: {str(e)}")
             logging.error(f"Traceback: {traceback.format_exc()}")
             flash(f'Error processing file: {str(e)}')
+        except pd.errors.EmptyDataError:
+            db.session.rollback()
+            logging.error(f"Empty file error: {file.filename}")
+            flash('The uploaded file is empty. Please upload a file with data.')
+        except pd.errors.ParserError as e:
+            db.session.rollback()
+            logging.error(f"Parser error for file {file.filename}: {str(e)}")
+            logging.error(f"Traceback: {traceback.format_exc()}")
+            flash(f'Error parsing file: {str(e)}. Please check the file format and try again.')
         except Exception as e:
             db.session.rollback()
             logging.error(f"Unexpected error processing file {file.filename}: {str(e)}")
