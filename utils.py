@@ -2,6 +2,7 @@ import pandas as pd
 from config import Config
 import logging
 from datetime import datetime
+from lxml import etree
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -80,3 +81,18 @@ def simulate_external_api_call(trade_data):
     else:
         logging.error("External API call failed")
         return False
+
+def process_xml_data(xml_content):
+    logging.info("Processing XML data")
+    root = etree.fromstring(xml_content)
+    data = []
+    for trade in root.findall('trade'):
+        trade_data = {
+            'trade_id': trade.find('trade_id').text,
+            'symbol': trade.find('symbol').text,
+            'quantity': int(trade.find('quantity').text),
+            'price': float(trade.find('price').text)
+        }
+        data.append(trade_data)
+    df = pd.DataFrame(data)
+    return process_trade_data(df)

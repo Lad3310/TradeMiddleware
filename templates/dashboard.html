@@ -7,8 +7,8 @@
 <h3>Upload Trade Data</h3>
 <form method="POST" action="{{ url_for('upload_file') }}" enctype="multipart/form-data">
     <div class="form-group">
-        <label for="file">Select file (CSV or JSON):</label>
-        <input type="file" id="file" name="file" accept=".csv,.json" required>
+        <label for="file">Select file (CSV, JSON, or XML):</label>
+        <input type="file" id="file" name="file" accept=".csv,.json,.xml" required>
     </div>
     <button type="submit" class="btn">Upload and Process</button>
 </form>

@@ -3,7 +3,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, AuditLog, ProcessedTrade
-from utils import process_trade_data, allowed_file, simulate_external_api_call
+from utils import process_trade_data, allowed_file, simulate_external_api_call, process_xml_data
 import pandas as pd
 import logging
 
@@ -73,12 +73,15 @@ def upload_file():
         try:
             if file.filename.endswith('.csv'):
                 df = pd.read_csv(file)
+                processed_data = process_trade_data(df)
             elif file.filename.endswith('.json'):
                 df = pd.read_json(file)
+                processed_data = process_trade_data(df)
+            elif file.filename.endswith('.xml'):
+                xml_content = file.read()
+                processed_data = process_xml_data(xml_content)
             else:
                 raise ValueError("Unsupported file format")
-
-            processed_data = process_trade_data(df)
             
             # Simulate sending data to external API
             success = simulate_external_api_call(processed_data)
