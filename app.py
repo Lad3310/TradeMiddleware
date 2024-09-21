@@ -7,11 +7,13 @@ from utils import process_trade_data, allowed_file, simulate_external_api_call, 
 import pandas as pd
 import logging
 from sqlalchemy.exc import SQLAlchemyError
+from flask_migrate import Migrate
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
 
 db.init_app(app)
+migrate = Migrate(app, db)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
