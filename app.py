@@ -19,7 +19,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -35,11 +35,24 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        user = User.query.filter_by(username=username).first()
-        if user and check_password_hash(user.password, password):
-            login_user(user)
-            return redirect(url_for('dashboard'))
-        flash('Invalid username or password')
+        logging.debug(f"Login attempt for username: {username}")
+        try:
+            user = User.query.filter_by(username=username).first()
+            if user and check_password_hash(user.password, password):
+                login_user(user)
+                logging.info(f"User {username} logged in successfully")
+                return redirect(url_for('dashboard'))
+            else:
+                logging.warning(f"Failed login attempt for username: {username}")
+                flash('Invalid username or password')
+        except SQLAlchemyError as e:
+            logging.error(f"Database error during login: {str(e)}")
+            logging.error(f"Traceback: {traceback.format_exc()}")
+            flash('An error occurred during login. Please try again later.')
+        except Exception as e:
+            logging.error(f"Unexpected error during login: {str(e)}")
+            logging.error(f"Traceback: {traceback.format_exc()}")
+            flash('An unexpected error occurred. Please try again later.')
     return render_template('login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -107,14 +120,11 @@ def upload_file():
             else:
                 raise ValueError("Unsupported file format")
             
-            # Simulate sending data to external API
             success = simulate_external_api_call(processed_data)
             
-            # Log the file transmission
             audit_log = AuditLog(user_id=current_user.id, filename=file.filename, status='Success' if success else 'Failed')
             db.session.add(audit_log)
             
-            # Log individual trades
             for _, row in processed_data.iterrows():
                 processed_trade = ProcessedTrade(
                     audit_log_id=audit_log.id,
@@ -173,4 +183,4 @@ def internal_error(error):
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)
