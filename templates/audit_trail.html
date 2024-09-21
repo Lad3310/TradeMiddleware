@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Audit Trail{% endblock %}
+
+{% block content %}
+<h2>Audit Trail</h2>
+<table id="audit-trail-table">
+    <thead>
+        <tr>
+            <th>Timestamp</th>
+            <th>Filename</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for log in logs %}
+        <tr>
+            <td>{{ log.timestamp }}</td>
+            <td>{{ log.filename }}</td>
+            <td>{{ log.status }}</td>
+            <td>
+                <button class="btn view-trades-btn" data-audit-log-id="{{ log.id }}">View Trades</button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

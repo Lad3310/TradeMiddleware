@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h2>Welcome, {{ current_user.username }}!</h2>
+<h3>Upload Trade Data</h3>
+<form method="POST" action="{{ url_for('upload_file') }}" enctype="multipart/form-data">
+    <div class="form-group">
+        <label for="file">Select file (CSV or JSON):</label>
+        <input type="file" id="file" name="file" accept=".csv,.json" required>
+    </div>
+    <button type="submit" class="btn">Upload and Process</button>
+</form>
+<p>
+    <a href="{{ url_for('audit_trail') }}" class="btn">View Audit Trail</a>
+</p>
+{% endblock %}
