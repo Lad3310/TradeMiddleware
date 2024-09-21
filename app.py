@@ -3,8 +3,9 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, AuditLog, ProcessedTrade
-from utils import process_trade_data, allowed_file
+from utils import process_trade_data, allowed_file, simulate_external_api_call
 import pandas as pd
+import logging
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
@@ -13,6 +14,8 @@ db.init_app(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -78,7 +81,7 @@ def upload_file():
             processed_data = process_trade_data(df)
             
             # Simulate sending data to external API
-            success = True  # Assume successful transmission for this example
+            success = simulate_external_api_call(processed_data)
             
             # Log the file transmission
             audit_log = AuditLog(user_id=current_user.id, filename=file.filename, status='Success' if success else 'Failed')
@@ -92,13 +95,14 @@ def upload_file():
                     symbol=row['symbol'],
                     quantity=row['quantity'],
                     price=row['price'],
-                    status='Processed'
+                    status='Processed' if success else 'Failed'
                 )
                 db.session.add(processed_trade)
             
             db.session.commit()
-            flash('File processed and transmitted successfully')
+            flash('File processed and transmitted successfully' if success else 'File processed but transmission failed')
         except Exception as e:
+            logging.error(f"Error processing file: {str(e)}")
             flash(f'Error processing file: {str(e)}')
     else:
         flash('File type not allowed')
@@ -121,6 +125,15 @@ def get_processed_trades(audit_log_id):
         'price': trade.price,
         'status': trade.status
     } for trade in trades])
+
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    db.session.rollback()
+    return render_template('500.html'), 500
 
 if __name__ == '__main__':
     with app.app_context():
