@@ -6,6 +6,7 @@ from models import db, User, AuditLog, ProcessedTrade
 from utils import process_trade_data, allowed_file, simulate_external_api_call, process_xml_data
 import pandas as pd
 import logging
+from sqlalchemy.exc import SQLAlchemyError
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
@@ -43,14 +44,30 @@ def register():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
+        
+        if not username or not password:
+            flash('Username and password are required')
+            return render_template('register.html')
+        
         if User.query.filter_by(username=username).first():
             flash('Username already exists')
-        else:
+            return render_template('register.html')
+        
+        try:
             new_user = User(username=username, password=generate_password_hash(password))
             db.session.add(new_user)
             db.session.commit()
             flash('Account created successfully')
             return redirect(url_for('login'))
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            logging.error(f"Database error during registration: {str(e)}")
+            flash('An error occurred during registration. Please try again later.')
+        except Exception as e:
+            db.session.rollback()
+            logging.error(f"Unexpected error during registration: {str(e)}")
+            flash('An unexpected error occurred. Please try again later.')
+    
     return render_template('register.html')
 
 @app.route('/logout')
@@ -105,6 +122,7 @@ def upload_file():
             db.session.commit()
             flash('File processed and transmitted successfully' if success else 'File processed but transmission failed')
         except Exception as e:
+            db.session.rollback()
             logging.error(f"Error processing file: {str(e)}")
             flash(f'Error processing file: {str(e)}')
     else:
@@ -136,6 +154,7 @@ def not_found_error(error):
 @app.errorhandler(500)
 def internal_error(error):
     db.session.rollback()
+    logging.error(f"Internal Server Error: {str(error)}")
     return render_template('500.html'), 500
 
 if __name__ == '__main__':
