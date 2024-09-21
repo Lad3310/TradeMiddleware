@@ -3,6 +3,7 @@ from config import Config
 import logging
 from datetime import datetime
 from lxml import etree
+import traceback
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -83,11 +84,15 @@ def simulate_external_api_call(trade_data):
         return False
 
 def process_xml_data(xml_content):
-    logging.info("Processing XML data")
+    logging.info("Starting XML data processing")
     try:
+        logging.info("Parsing XML content")
         root = etree.fromstring(xml_content)
+        logging.info(f"XML root element: {root.tag}")
+        
         data = []
         for trade in root.findall('Trade'):
+            logging.info(f"Processing trade element: {etree.tostring(trade).decode()}")
             try:
                 trade_data = {
                     'trade_id': trade.find('TradeID').text if trade.find('TradeID') is not None else None,
@@ -103,23 +108,29 @@ def process_xml_data(xml_content):
                     logging.warning(f"Skipping trade: {etree.tostring(trade).decode()}")
                     continue
                 
+                logging.info(f"Processed trade data: {trade_data}")
                 data.append(trade_data)
             except AttributeError as e:
                 logging.error(f"Error parsing trade element: {e}")
                 logging.error(f"Problematic trade element: {etree.tostring(trade).decode()}")
+                logging.error(f"Traceback: {traceback.format_exc()}")
             except ValueError as e:
                 logging.error(f"Error converting data: {e}")
                 logging.error(f"Problematic trade element: {etree.tostring(trade).decode()}")
+                logging.error(f"Traceback: {traceback.format_exc()}")
         
         if not data:
+            logging.error("No valid trade data found in the XML file")
             raise ValueError("No valid trade data found in the XML file")
         
+        logging.info(f"Creating DataFrame with {len(data)} trades")
         df = pd.DataFrame(data)
         return process_trade_data(df)
     except etree.XMLSyntaxError as e:
         logging.error(f"XML Syntax Error: {e}")
+        logging.error(f"Traceback: {traceback.format_exc()}")
         raise ValueError(f"Invalid XML format: {e}")
     except Exception as e:
         logging.error(f"Unexpected error processing XML data: {e}")
+        logging.error(f"Traceback: {traceback.format_exc()}")
         raise ValueError(f"Error processing XML data: {e}")
-

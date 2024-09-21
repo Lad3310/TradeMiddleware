@@ -8,6 +8,7 @@ import pandas as pd
 import logging
 from sqlalchemy.exc import SQLAlchemyError
 from flask_migrate import Migrate
+import traceback
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
@@ -93,6 +94,7 @@ def upload_file():
         return redirect(url_for('dashboard'))
     if file and allowed_file(file.filename):
         try:
+            logging.info(f"Processing file: {file.filename}")
             if file.filename.endswith('.csv'):
                 df = pd.read_csv(file)
                 processed_data = process_trade_data(df)
@@ -128,11 +130,13 @@ def upload_file():
             flash('File processed and transmitted successfully' if success else 'File processed but transmission failed')
         except ValueError as e:
             db.session.rollback()
-            logging.error(f"Error processing file: {str(e)}")
+            logging.error(f"Error processing file {file.filename}: {str(e)}")
+            logging.error(f"Traceback: {traceback.format_exc()}")
             flash(f'Error processing file: {str(e)}')
         except Exception as e:
             db.session.rollback()
-            logging.error(f"Unexpected error processing file: {str(e)}")
+            logging.error(f"Unexpected error processing file {file.filename}: {str(e)}")
+            logging.error(f"Traceback: {traceback.format_exc()}")
             flash(f'An unexpected error occurred while processing the file. Please try again later.')
     else:
         flash('File type not allowed')
