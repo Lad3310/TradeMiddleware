@@ -4,6 +4,7 @@ import logging
 from datetime import datetime
 from lxml import etree
 import traceback
+import io
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -86,37 +87,45 @@ def simulate_external_api_call(trade_data):
 def process_xml_data(xml_content):
     logging.info("Starting XML data processing")
     try:
-        logging.debug(f"Raw XML content: {xml_content[:200]}...")  # Log first 200 characters of XML content
+        # Log the first 200 characters of XML content for debugging
+        logging.debug(f"Raw XML content (first 200 chars): {xml_content[:200]}")
+        
+        # Parse XML content
         root = etree.fromstring(xml_content)
         logging.info(f"XML root element: {root.tag}")
         
         data = []
         for trade in root.findall('Trade'):
-            logging.debug(f"Processing trade element: {etree.tostring(trade).decode()}")
+            logging.debug(f"Processing trade element: {etree.tostring(trade, encoding='unicode')}")
             try:
                 trade_data = {
-                    'trade_id': trade.find('TradeID').text if trade.find('TradeID') is not None else None,
-                    'symbol': trade.find('Security').text if trade.find('Security') is not None else None,
-                    'quantity': int(trade.find('Quantity').text) if trade.find('Quantity') is not None else None,
-                    'price': float(trade.find('Price').text) if trade.find('Price') is not None else None
+                    'trade_id': trade.findtext('TradeID'),
+                    'symbol': trade.findtext('Security'),
+                    'quantity': trade.findtext('Quantity'),
+                    'price': trade.findtext('Price')
                 }
                 
                 # Check for missing required fields
                 missing_fields = [field for field, value in trade_data.items() if value is None]
                 if missing_fields:
                     logging.warning(f"Trade is missing required fields: {', '.join(missing_fields)}")
-                    logging.warning(f"Skipping trade: {etree.tostring(trade).decode()}")
+                    logging.warning(f"Skipping trade: {etree.tostring(trade, encoding='unicode')}")
+                    continue
+                
+                # Convert quantity and price to appropriate types
+                try:
+                    trade_data['quantity'] = int(trade_data['quantity'])
+                    trade_data['price'] = float(trade_data['price'])
+                except ValueError as e:
+                    logging.error(f"Error converting data types: {e}")
+                    logging.error(f"Problematic trade element: {etree.tostring(trade, encoding='unicode')}")
                     continue
                 
                 logging.debug(f"Processed trade data: {trade_data}")
                 data.append(trade_data)
-            except AttributeError as e:
-                logging.error(f"Error parsing trade element: {e}")
-                logging.error(f"Problematic trade element: {etree.tostring(trade).decode()}")
-                logging.error(f"Traceback: {traceback.format_exc()}")
-            except ValueError as e:
-                logging.error(f"Error converting data: {e}")
-                logging.error(f"Problematic trade element: {etree.tostring(trade).decode()}")
+            except Exception as e:
+                logging.error(f"Error processing trade element: {e}")
+                logging.error(f"Problematic trade element: {etree.tostring(trade, encoding='unicode')}")
                 logging.error(f"Traceback: {traceback.format_exc()}")
         
         if not data:
@@ -134,3 +143,4 @@ def process_xml_data(xml_content):
         logging.error(f"Unexpected error processing XML data: {e}")
         logging.error(f"Traceback: {traceback.format_exc()}")
         raise ValueError(f"Error processing XML data: {e}")
+

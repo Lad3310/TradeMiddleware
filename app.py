@@ -9,6 +9,7 @@ import logging
 from sqlalchemy.exc import SQLAlchemyError
 from flask_migrate import Migrate
 import traceback
+import io
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
@@ -108,15 +109,17 @@ def upload_file():
     if file and allowed_file(file.filename):
         try:
             logging.info(f"Processing file: {file.filename}")
-            if file.filename.endswith('.csv'):
-                df = pd.read_csv(file)
+            file_content = file.read()
+            file_extension = file.filename.rsplit('.', 1)[1].lower()
+
+            if file_extension == 'csv':
+                df = pd.read_csv(io.StringIO(file_content.decode('utf-8')))
                 processed_data = process_trade_data(df)
-            elif file.filename.endswith('.json'):
-                df = pd.read_json(file)
+            elif file_extension == 'json':
+                df = pd.read_json(io.StringIO(file_content.decode('utf-8')))
                 processed_data = process_trade_data(df)
-            elif file.filename.endswith('.xml'):
-                xml_content = file.read()
-                processed_data = process_xml_data(xml_content)
+            elif file_extension == 'xml':
+                processed_data = process_xml_data(file_content)
             else:
                 raise ValueError("Unsupported file format")
             
