@@ -84,15 +84,33 @@ def simulate_external_api_call(trade_data):
 
 def process_xml_data(xml_content):
     logging.info("Processing XML data")
-    root = etree.fromstring(xml_content)
-    data = []
-    for trade in root.findall('trade'):
-        trade_data = {
-            'trade_id': trade.find('trade_id').text,
-            'symbol': trade.find('symbol').text,
-            'quantity': int(trade.find('quantity').text),
-            'price': float(trade.find('price').text)
-        }
-        data.append(trade_data)
-    df = pd.DataFrame(data)
-    return process_trade_data(df)
+    try:
+        root = etree.fromstring(xml_content)
+        data = []
+        for trade in root.findall('trade'):
+            try:
+                trade_data = {
+                    'trade_id': trade.find('trade_id').text,
+                    'symbol': trade.find('symbol').text,
+                    'quantity': int(trade.find('quantity').text),
+                    'price': float(trade.find('price').text)
+                }
+                data.append(trade_data)
+            except AttributeError as e:
+                logging.error(f"Error parsing trade element: {e}")
+                logging.error(f"Problematic trade element: {etree.tostring(trade).decode()}")
+            except ValueError as e:
+                logging.error(f"Error converting data: {e}")
+                logging.error(f"Problematic trade element: {etree.tostring(trade).decode()}")
+        
+        if not data:
+            raise ValueError("No valid trade data found in the XML file")
+        
+        df = pd.DataFrame(data)
+        return process_trade_data(df)
+    except etree.XMLSyntaxError as e:
+        logging.error(f"XML Syntax Error: {e}")
+        raise ValueError(f"Invalid XML format: {e}")
+    except Exception as e:
+        logging.error(f"Unexpected error processing XML data: {e}")
+        raise ValueError(f"Error processing XML data: {e}")

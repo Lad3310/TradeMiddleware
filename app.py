@@ -126,10 +126,14 @@ def upload_file():
             
             db.session.commit()
             flash('File processed and transmitted successfully' if success else 'File processed but transmission failed')
-        except Exception as e:
+        except ValueError as e:
             db.session.rollback()
             logging.error(f"Error processing file: {str(e)}")
             flash(f'Error processing file: {str(e)}')
+        except Exception as e:
+            db.session.rollback()
+            logging.error(f"Unexpected error processing file: {str(e)}")
+            flash(f'An unexpected error occurred while processing the file. Please try again later.')
     else:
         flash('File type not allowed')
     return redirect(url_for('dashboard'))
