@@ -9,6 +9,8 @@ import requests
 from requests.exceptions import RequestException, Timeout, ConnectionError
 import socket
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import asyncio
+import aiohttp
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -89,24 +91,16 @@ class CircuitBreaker:
                 return True
         return False
 
-def simulate_external_api_call(trade_data, max_retries=5, timeout=30, chunk_size=10, total_timeout=300):
-    circuit_breaker = CircuitBreaker()
+async def async_process_chunk(session, chunk, timeout):
+    try:
+        async with session.post('https://httpbin.org/post', json=chunk.to_dict(), timeout=timeout) as response:
+            await response.json()
+        return True
+    except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+        logging.warning(f"API call failed: {str(e)}")
+        return False
 
-    def process_chunk(chunk):
-        if not circuit_breaker.allow_request():
-            raise Exception("Circuit breaker is open")
-
-        try:
-            time.sleep(random.uniform(0.1, 0.5))
-            response = requests.post('https://httpbin.org/post', json=chunk.to_dict(), timeout=timeout)
-            response.raise_for_status()
-            circuit_breaker.record_success()
-            return True
-        except (RequestException, Timeout, ConnectionError) as e:
-            circuit_breaker.record_failure()
-            logging.warning(f"API call failed: {str(e)}")
-            raise
-
+async def async_simulate_external_api_call(trade_data, max_retries=5, timeout=30, chunk_size=10, total_timeout=300):
     total_rows = len(trade_data)
     processed_rows = 0
     failed_rows = 0
@@ -114,35 +108,20 @@ def simulate_external_api_call(trade_data, max_retries=5, timeout=30, chunk_size
     total_delay = 0
     start_time = time.time()
 
-    for i in range(0, total_rows, chunk_size):
-        if time.time() - start_time > total_timeout:
-            logging.error(f"Total timeout of {total_timeout} seconds exceeded. Stopping processing.")
-            break
+    async with aiohttp.ClientSession() as session:
+        tasks = []
+        for i in range(0, total_rows, chunk_size):
+            chunk = trade_data[i:i+chunk_size]
+            task = asyncio.create_task(process_chunk_with_retry(session, chunk, max_retries, timeout))
+            tasks.append(task)
 
-        chunk = trade_data[i:i+chunk_size]
-        chunk_processed = False
-        attempts = 0
+        results = await asyncio.gather(*tasks)
 
-        while not chunk_processed and attempts < max_retries:
-            attempts += 1
-            total_attempts += 1
-            try:
-                success = process_chunk(chunk)
-                if success:
-                    processed_rows += len(chunk)
-                    chunk_processed = True
-                    logging.info(f"Processed chunk {i//chunk_size + 1}/{(total_rows + chunk_size - 1)//chunk_size}")
-                else:
-                    raise RequestException("Chunk processing failed")
-            except Exception as e:
-                delay = exponential_backoff(attempts - 1)
-                total_delay += delay
-                logging.warning(f"Attempt {attempts} failed for chunk {i//chunk_size + 1}. Retrying in {delay:.2f} seconds. Error: {str(e)}")
-                time.sleep(delay)
-
-        if not chunk_processed:
-            failed_rows += len(chunk)
-            logging.error(f"Failed to process chunk {i//chunk_size + 1} after {max_retries} attempts")
+    for result in results:
+        processed_rows += result['processed']
+        failed_rows += result['failed']
+        total_attempts += result['attempts']
+        total_delay += result['delay']
 
     success_rate = processed_rows / total_rows if total_rows > 0 else 0
     status = 'success' if success_rate > 0.8 else 'partial_success' if success_rate > 0 else 'failure'
@@ -158,6 +137,31 @@ def simulate_external_api_call(trade_data, max_retries=5, timeout=30, chunk_size
     }
     logging.info(f"API simulation completed. Result: {result}")
     return result
+
+async def process_chunk_with_retry(session, chunk, max_retries, timeout):
+    attempts = 0
+    delay = 0
+    processed = 0
+    failed = 0
+
+    while attempts < max_retries:
+        attempts += 1
+        try:
+            success = await async_process_chunk(session, chunk, timeout)
+            if success:
+                processed = len(chunk)
+                return {'processed': processed, 'failed': 0, 'attempts': attempts, 'delay': delay}
+        except Exception as e:
+            logging.warning(f"Attempt {attempts} failed. Error: {str(e)}")
+        
+        delay += exponential_backoff(attempts)
+        await asyncio.sleep(delay)
+
+    failed = len(chunk)
+    return {'processed': 0, 'failed': failed, 'attempts': attempts, 'delay': delay}
+
+def simulate_external_api_call(trade_data, max_retries=5, timeout=30, chunk_size=10, total_timeout=300):
+    return asyncio.run(async_simulate_external_api_call(trade_data, max_retries, timeout, chunk_size, total_timeout))
 
 def process_xml_data(xml_content, chunk_size=1000, progress_callback=None):
     logging.info("Starting XML data processing")

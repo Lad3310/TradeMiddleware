@@ -15,6 +15,10 @@ author = "agent"
 task = "workflow.run"
 args = "Run Flask App"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Run API Simulation Tests"
+
 [[workflows.workflow]]
 name = "Run Flask App"
 author = "agent"
@@ -26,6 +30,17 @@ agentRequireRestartOnSave = false
 task = "shell.exec"
 args = "python app.py"
 waitForPort = 5000
+
+[[workflows.workflow]]
+name = "Run API Simulation Tests"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python test_api_simulation.py"
 
 [deployment]
 run = ["sh", "-c", "python app.py"]

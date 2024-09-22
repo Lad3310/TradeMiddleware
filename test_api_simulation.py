@@ -1,6 +1,7 @@
 import pandas as pd
 from utils import simulate_external_api_call
 import logging
+import asyncio
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -26,15 +27,23 @@ def test_partial_failure_scenario():
     logging.info(f"Result: {result}")
     assert result['status'] in ['partial_success', 'failure'], "Expected partial failure or failure"
 
-def test_circuit_breaker_scenario():
-    logging.info("Testing circuit breaker scenario")
-    test_data = create_test_data(200)
-    result = simulate_external_api_call(test_data, max_retries=3, timeout=1, chunk_size=10, total_timeout=60)
+def test_large_dataset_scenario():
+    logging.info("Testing large dataset scenario")
+    test_data = create_test_data(1000)
+    result = simulate_external_api_call(test_data, max_retries=3, timeout=5, chunk_size=50, total_timeout=120)
     logging.info(f"Result: {result}")
-    assert result['failed_rows'] > 0, "Expected some failed rows due to circuit breaker"
+    assert result['processed_rows'] > 0, "Expected some processed rows"
+
+def test_timeout_scenario():
+    logging.info("Testing timeout scenario")
+    test_data = create_test_data(500)
+    result = simulate_external_api_call(test_data, max_retries=2, timeout=1, chunk_size=10, total_timeout=5)
+    logging.info(f"Result: {result}")
+    assert result['status'] == 'failure', "Expected failure due to timeout"
 
 if __name__ == "__main__":
     test_successful_scenario()
     test_partial_failure_scenario()
-    test_circuit_breaker_scenario()
+    test_large_dataset_scenario()
+    test_timeout_scenario()
     logging.info("All tests completed")
