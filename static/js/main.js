@@ -3,6 +3,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const fileUploadForm = document.getElementById('file-upload-form');
     const dashboardStats = document.getElementById('dashboard-stats');
     const progressContainer = document.getElementById('progress-container');
+    const progressBar = document.getElementById('progress-bar-fill');
+    const progressText = document.getElementById('progress-text');
 
     if (auditTrailTable) {
         initializeAuditTrail(auditTrailTable);
@@ -17,6 +19,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     createPersistentMessageArea();
+
+    const socket = io();
+    socket.on('processing_progress', function(data) {
+        updateProgressBar(data.processed, data.total);
+    });
 });
 
 function initializeAuditTrail(table) {
@@ -54,9 +61,10 @@ function initializeFileUpload(form) {
             submitButton.textContent = 'Uploading...';
         }
 
-        progressContainer.style.display = 'none';
-        document.getElementById('progress-bar-fill').style.width = '0%';
-        document.getElementById('progress-text').textContent = '0%';
+        progressContainer.style.display = 'block';
+        updateProgressBar(0, 100);
+
+        let processingStartTime = Date.now();
 
         fetch('/upload', {
             method: 'POST',
@@ -85,9 +93,31 @@ function initializeFileUpload(form) {
                 submitButton.disabled = false;
                 submitButton.textContent = 'Upload and Process';
             }
-            progressContainer.style.display = 'none';
+            
+            const processingEndTime = Date.now();
+            const processingDuration = processingEndTime - processingStartTime;
+            const minimumDisplayTime = 3000;
+
+            if (processingDuration < minimumDisplayTime) {
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                }, minimumDisplayTime - processingDuration);
+            } else {
+                progressContainer.style.display = 'none';
+            }
         });
     });
+}
+
+function updateProgressBar(processed, total) {
+    const progressContainer = document.getElementById('progress-container');
+    const progressBar = document.getElementById('progress-bar-fill');
+    const progressText = document.getElementById('progress-text');
+    
+    progressContainer.style.display = 'block';
+    const percentage = Math.round((processed / total) * 100);
+    progressBar.style.width = percentage + '%';
+    progressText.textContent = `${processed}/${total} processed (${percentage}%)`;
 }
 
 function fetchProcessedTrades(auditLogId) {
@@ -156,6 +186,7 @@ function showModal(status, message, details = null) {
             <p>Processed Rows: ${details.processed_rows}</p>
             <p>Failed Rows: ${details.failed_rows}</p>
             <p>Success Rate: ${(details.success_rate * 100).toFixed(2)}%</p>
+            ${details.log_file ? `<p><a href="/download_log/${details.log_file}" target="_blank">Download Processing Log</a></p>` : ''}
         ` : ''}
     `;
     modal.querySelector('.modal-content').appendChild(content);
@@ -167,7 +198,7 @@ function showModal(status, message, details = null) {
 
     setTimeout(() => {
         closeModal(modal);
-    }, 5000);
+    }, 10000);
 }
 
 function createModal(title) {
@@ -242,15 +273,3 @@ function updateDashboardStats(data) {
         ` : ''}
     `;
 }
-
-const socket = io();
-socket.on('processing_progress', function(data) {
-    const progressContainer = document.getElementById('progress-container');
-    const progressBarFill = document.getElementById('progress-bar-fill');
-    const progressText = document.getElementById('progress-text');
-    
-    progressContainer.style.display = 'block';
-    const percentage = Math.round((data.processed / data.total) * 100);
-    progressBarFill.style.width = percentage + '%';
-    progressText.textContent = percentage + '%';
-});

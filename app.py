@@ -1,30 +1,49 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
-from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import db, User, AuditLog, ProcessedTrade
-from utils import process_trade_data, allowed_file, simulate_external_api_call, process_xml_data
+from flask_sqlalchemy import SQLAlchemy
+from config import Config
+from utils import process_trade_data, process_xml_data, allowed_file, simulate_external_api_call
 import pandas as pd
-import logging
-from sqlalchemy.exc import SQLAlchemyError
-from flask_migrate import Migrate
-import traceback
 import io
+import logging
+import traceback
+from flask_socketio import SocketIO
+import time
 from lxml import etree
 from sqlalchemy import func
-from flask_socketio import SocketIO
 
 app = Flask(__name__)
-app.config.from_object('config.Config')
-
-db.init_app(app)
-migrate = Migrate(app, db)
-login_manager = LoginManager()
-login_manager.init_app(app)
+app.config.from_object(Config)
+db = SQLAlchemy(app)
+login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 socketio = SocketIO(app)
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(64), unique=True, nullable=False)
+    password = db.Column(db.String(128), nullable=False)
+
+class AuditLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    filename = db.Column(db.String(128), nullable=False)
+    timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())
+    status = db.Column(db.String(20), nullable=False)
+    log_file = db.Column(db.String(128), nullable=True)
+
+class ProcessedTrade(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    audit_log_id = db.Column(db.Integer, db.ForeignKey('audit_log.id'), nullable=False)
+    trade_id = db.Column(db.String(64), nullable=False)
+    symbol = db.Column(db.String(10), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    status = db.Column(db.String(20), nullable=False)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -54,12 +73,6 @@ def login():
             else:
                 logging.warning(f"Failed login attempt for username: {username} (Mobile: {is_mobile})")
                 flash('Invalid username or password')
-        except SQLAlchemyError as e:
-            logging.error(f"Database error during login: {str(e)} (Mobile: {is_mobile})")
-            logging.error(f"Traceback: {traceback.format_exc()}")
-            db.session.rollback()
-            flash('A database error occurred. Please try again later.')
-            return render_template('login.html'), 500
         except Exception as e:
             logging.error(f"Unexpected error during login: {str(e)} (Mobile: {is_mobile})")
             logging.error(f"Traceback: {traceback.format_exc()}")
@@ -88,11 +101,6 @@ def register():
             logging.info(f"User {username} registered successfully")
             flash('Account created successfully')
             return redirect(url_for('login'))
-        except SQLAlchemyError as e:
-            db.session.rollback()
-            error_msg = str(e)
-            logging.error(f"Database error during registration: {error_msg}")
-            flash(f'An error occurred during registration: {error_msg}. Please try again later.')
         except Exception as e:
             db.session.rollback()
             error_msg = str(e)
@@ -121,32 +129,50 @@ def upload_file():
             file_content = file.read()
             file_extension = file.filename.rsplit('.', 1)[1].lower()
 
-            if file_extension == 'csv':
-                df = pd.read_csv(io.StringIO(file_content.decode('utf-8')))
-                processed_data = process_trade_data(df)
-            elif file_extension == 'json':
-                df = pd.read_json(io.StringIO(file_content.decode('utf-8')))
-                processed_data = process_trade_data(df)
-            elif file_extension == 'xml':
-                try:
-                    def progress_callback(processed, total):
-                        socketio.emit('processing_progress', {'processed': processed, 'total': total})
+            start_time = time.time()
+            timeout = 300  # 5 minutes timeout
 
-                    processed_data = process_xml_data(file_content, progress_callback=progress_callback)
-                except ValueError as xml_error:
-                    logging.error(f"XML processing error: {str(xml_error)}")
-                    return jsonify({'status': 'error', 'message': f'Error processing XML file: {str(xml_error)}. Please check the file format and try again.'})
-                except etree.XMLSyntaxError as xml_syntax_error:
-                    logging.error(f"XML syntax error: {str(xml_syntax_error)}")
-                    return jsonify({'status': 'error', 'message': f'Invalid XML format: {str(xml_syntax_error)}. Please check the file and try again.'})
-            else:
-                return jsonify({'status': 'error', 'message': 'Unsupported file format'})
-            
-            logging.info(f"File processed successfully. Rows: {len(processed_data)}")
-            
-            api_result = simulate_external_api_call(processed_data, max_retries=5, timeout=30, chunk_size=10, total_timeout=300)
-            
-            audit_log = AuditLog(user_id=current_user.id, filename=file.filename, status=api_result['status'])
+            log_filename = f"processing_log_{int(time.time())}.txt"
+            log_filepath = os.path.join(app.config['UPLOAD_FOLDER'], log_filename)
+
+            with open(log_filepath, 'w') as log_file:
+                log_file.write(f"Processing started for file: {file.filename}\n")
+
+                if file_extension == 'csv':
+                    df = pd.read_csv(io.StringIO(file_content.decode('utf-8')))
+                    processed_data = process_trade_data(df)
+                elif file_extension == 'json':
+                    df = pd.read_json(io.StringIO(file_content.decode('utf-8')))
+                    processed_data = process_trade_data(df)
+                elif file_extension == 'xml':
+                    try:
+                        def progress_callback(processed, total):
+                            progress = (processed / total) * 100
+                            log_file.write(f"XML Processing Progress: {progress:.2f}%\n")
+                            log_file.flush()
+                            socketio.emit('processing_progress', {'processed': processed, 'total': total})
+
+                        processed_data = process_xml_data(file_content, progress_callback=progress_callback)
+                    except ValueError as xml_error:
+                        log_file.write(f"XML processing error: {str(xml_error)}\n")
+                        return jsonify({'status': 'error', 'message': f'Error processing XML file: {str(xml_error)}. Please check the file format and try again.'})
+                    except etree.XMLSyntaxError as xml_syntax_error:
+                        log_file.write(f"XML syntax error: {str(xml_syntax_error)}\n")
+                        return jsonify({'status': 'error', 'message': f'Invalid XML format: {str(xml_syntax_error)}. Please check the file and try again.'})
+                else:
+                    return jsonify({'status': 'error', 'message': 'Unsupported file format'})
+                
+                processing_time = time.time() - start_time
+                log_file.write(f"File processed successfully. Rows: {len(processed_data)}. Processing time: {processing_time:.2f} seconds\n")
+                
+                if time.time() - start_time > timeout:
+                    log_file.write("Processing timeout. Please try with a smaller file or contact support.\n")
+                    return jsonify({'status': 'error', 'message': 'Processing timeout. Please try with a smaller file or contact support.'})
+                
+                api_result = simulate_external_api_call(processed_data, max_retries=5, timeout=30, chunk_size=10, total_timeout=300)
+                log_file.write(f"API Simulation Result: {api_result}\n")
+
+            audit_log = AuditLog(user_id=current_user.id, filename=file.filename, status=api_result['status'], log_file=log_filename)
             db.session.add(audit_log)
             db.session.flush()
             
@@ -177,7 +203,8 @@ def upload_file():
                     'failed_rows': api_result['failed_rows'],
                     'total_attempts': api_result['total_attempts'],
                     'total_delay': api_result['total_delay']
-                }
+                },
+                'log_file': log_filename
             })
         except Exception as e:
             db.session.rollback()
@@ -226,6 +253,16 @@ def dashboard_stats():
         'failed_uploads': failed_uploads,
         'recent_uploads': recent_uploads_data
     })
+
+@app.route('/download_log/<filename>')
+@login_required
+def download_log(filename):
+    log_filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    if os.path.exists(log_filepath):
+        return send_file(log_filepath, as_attachment=True)
+    else:
+        flash('Log file not found', 'error')
+        return redirect(url_for('dashboard'))
 
 @app.errorhandler(404)
 def not_found_error(error):

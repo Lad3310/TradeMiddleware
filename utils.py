@@ -167,8 +167,11 @@ def process_xml_data(xml_content, chunk_size=1000, progress_callback=None):
         context = etree.iterparse(io.BytesIO(xml_content), events=('end',), tag='Trade')
         
         data = []
-        total_trades = 0
+        total_trades = sum(1 for _ in context)
+        context = etree.iterparse(io.BytesIO(xml_content), events=('end',), tag='Trade')  # Reset iterator
         processed_trades = 0
+        
+        start_time = time.time()
         
         def process_trade_chunk(chunk):
             nonlocal processed_trades
@@ -199,8 +202,9 @@ def process_xml_data(xml_content, chunk_size=1000, progress_callback=None):
                     chunk_data.append(trade_data)
                     processed_trades += 1
                     
-                    if processed_trades % 100 == 0:
-                        logging.info(f"Processed {processed_trades} trades")
+                    if processed_trades % 10 == 0:  # Update progress more frequently
+                        elapsed_time = time.time() - start_time
+                        logging.info(f"Processed {processed_trades}/{total_trades} trades in {elapsed_time:.2f} seconds")
                         if progress_callback:
                             progress_callback(processed_trades, total_trades)
                     
@@ -219,7 +223,6 @@ def process_xml_data(xml_content, chunk_size=1000, progress_callback=None):
             for event, elem in context:
                 if elem.tag == 'Trade':
                     chunk.append(elem)
-                    total_trades += 1
                     
                     if len(chunk) == chunk_size:
                         futures.append(executor.submit(process_trade_chunk, chunk))
@@ -238,6 +241,11 @@ def process_xml_data(xml_content, chunk_size=1000, progress_callback=None):
         logging.info(f"Creating DataFrame with {len(data)} trades")
         df = pd.DataFrame(data)
         logging.info(f"Total trades in XML: {total_trades}, Processed trades: {processed_trades}")
+        
+        # Ensure final progress update
+        if progress_callback:
+            progress_callback(processed_trades, total_trades)
+        
         return process_trade_data(df)
     except etree.XMLSyntaxError as e:
         logging.error(f"XML Syntax Error: {e}")
