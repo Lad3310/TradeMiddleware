@@ -133,6 +133,8 @@ def upload_file():
             else:
                 return jsonify({'status': 'error', 'message': 'Unsupported file format'})
             
+            logging.info(f"File processed successfully. Rows: {len(processed_data)}")
+            
             api_result = simulate_external_api_call(processed_data)
             
             audit_log = AuditLog(user_id=current_user.id, filename=file.filename, status=api_result['status'])
@@ -156,6 +158,7 @@ def upload_file():
                 db.session.add(processed_trade)
             
             db.session.commit()
+            logging.info(f"Processed trades saved to database. Total trades: {len(processed_data)}")
             return jsonify({
                 'status': api_result['status'],
                 'message': api_result['message'],

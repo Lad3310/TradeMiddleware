@@ -107,7 +107,7 @@ def simulate_external_api_call(trade_data, max_retries=5, timeout=30, chunk_size
     success_rate = processed_rows / total_rows
     status = 'success' if success_rate > 0.8 else 'partial_success' if success_rate > 0 else 'failure'
 
-    return {
+    result = {
         'status': status,
         'success_rate': success_rate,
         'processed_rows': processed_rows,
@@ -116,6 +116,8 @@ def simulate_external_api_call(trade_data, max_retries=5, timeout=30, chunk_size
         'total_delay': total_delay,
         'message': f"Processed {processed_rows}/{total_rows} rows. {failed_rows} rows failed."
     }
+    logging.info(f"API simulation completed. Result: {result}")
+    return result
 
 def process_xml_data(xml_content):
     logging.info("Starting XML data processing")
