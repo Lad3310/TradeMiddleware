@@ -10,6 +10,7 @@
             <th data-column="timestamp">Timestamp</th>
             <th data-column="filename">Filename</th>
             <th data-column="status">Status</th>
+            <th data-column="log_file">Log File</th>
             <th>Actions</th>
         </tr>
     </thead>
@@ -19,8 +20,15 @@
             <td data-column="timestamp">{{ log.timestamp }}</td>
             <td data-column="filename">{{ log.filename }}</td>
             <td data-column="status">{{ log.status }}</td>
+            <td data-column="log_file">
+                {% if log.log_file %}
+                <a href="{{ url_for('download_log', filename=log.log_file) }}">Download Log</a>
+                {% else %}
+                N/A
+                {% endif %}
+            </td>
             <td>
-                <button class="btn view-trades-btn" data-audit-log-id="{{ log.id }}">View Trades</button>
+                <button class="view-trades-btn" data-audit-log-id="{{ log.id }}">View Trades</button>
             </td>
         </tr>
         {% endfor %}
