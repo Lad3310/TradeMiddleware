@@ -14,6 +14,7 @@ class Config:
         
         SQLALCHEMY_DATABASE_URI = f"postgresql://{os.environ['PGUSER']}:{os.environ['PGPASSWORD']}@{os.environ['PGHOST']}:{os.environ['PGPORT']}/{os.environ['PGDATABASE']}"
         logging.info("Database configuration loaded successfully")
+        logging.debug(f"Database URI: {SQLALCHEMY_DATABASE_URI.replace(os.environ['PGPASSWORD'], '********')}")
     except KeyError as e:
         logging.error(f"Environment variable error: {str(e)}")
         raise

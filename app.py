@@ -53,10 +53,12 @@ def login():
             logging.error(f"Traceback: {traceback.format_exc()}")
             db.session.rollback()
             flash('A database error occurred. Please try again later.')
+            return render_template('login.html'), 500
         except Exception as e:
             logging.error(f"Unexpected error during login: {str(e)}")
             logging.error(f"Traceback: {traceback.format_exc()}")
             flash('An unexpected error occurred. Please try again later.')
+            return render_template('login.html'), 500
     return render_template('login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -133,17 +135,15 @@ def upload_file():
             
             api_result = simulate_external_api_call(processed_data)
             
-            # Create AuditLog entry
             audit_log = AuditLog(user_id=current_user.id, filename=file.filename, status=api_result['status'])
             db.session.add(audit_log)
-            db.session.flush()  # Flush the session to get the audit_log_id
+            db.session.flush()
             
             if audit_log.id is None:
                 raise ValueError("Failed to generate audit_log_id")
             
             logging.info(f"Created AuditLog entry with id: {audit_log.id}")
             
-            # Create ProcessedTrade entries
             for _, row in processed_data.iterrows():
                 processed_trade = ProcessedTrade(
                     audit_log_id=audit_log.id,
