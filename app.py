@@ -51,7 +51,8 @@ def login():
         except SQLAlchemyError as e:
             logging.error(f"Database error during login: {str(e)}")
             logging.error(f"Traceback: {traceback.format_exc()}")
-            flash('An error occurred during login. Please try again later.')
+            db.session.rollback()
+            flash('A database error occurred. Please try again later.')
         except Exception as e:
             logging.error(f"Unexpected error during login: {str(e)}")
             logging.error(f"Traceback: {traceback.format_exc()}")
