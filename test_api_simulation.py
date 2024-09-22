@@ -8,7 +8,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 def create_test_data(num_rows):
     return pd.DataFrame({
         'trade_id': range(1, num_rows + 1),
-        'symbol': ['AAPL', 'GOOGL', 'MSFT', 'AMZN'] * (num_rows // 4 + 1),
+        'symbol': ['AAPL', 'GOOGL', 'MSFT', 'AMZN'] * ((num_rows + 3) // 4),
         'quantity': [100] * num_rows,
         'price': [150.0] * num_rows
     })
