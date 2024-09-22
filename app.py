@@ -13,7 +13,7 @@ import traceback
 from flask_socketio import SocketIO
 import time
 from lxml import etree
-from sqlalchemy import func
+from sqlalchemy import func, create_engine
 from models import db, User, AuditLog, ProcessedTrade
 
 app = Flask(__name__)
@@ -33,6 +33,17 @@ login_manager.login_view = 'login'
 socketio = SocketIO(app)
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Test database connection
+def test_db_connection():
+    try:
+        engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+        connection = engine.connect()
+        connection.close()
+        logging.info("Database connection successful")
+    except Exception as e:
+        logging.error(f"Database connection failed: {str(e)}")
+        logging.error(f"Traceback: {traceback.format_exc()}")
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -55,6 +66,7 @@ def login():
         logging.debug(f"Is Mobile: {is_mobile}")
         try:
             user = User.query.filter_by(username=username).first()
+            logging.debug(f"User query result: {user}")
             if user and check_password_hash(user.password, password):
                 login_user(user)
                 logging.info(f"User {username} logged in successfully (Mobile: {is_mobile})")
@@ -265,5 +277,6 @@ def internal_error(error):
 
 if __name__ == '__main__':
     with app.app_context():
+        test_db_connection()
         db.create_all()
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)

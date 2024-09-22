@@ -18,6 +18,7 @@ flask-migrate = "^4.0.7"
 requests = "^2.32.3"
 flask-socketio = "^5.3.7"
 aiohttp = "^3.10.5"
+python-dotenv = "^1.0.1"
 
 
 [build-system]
