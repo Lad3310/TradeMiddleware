@@ -40,24 +40,28 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
+        user_agent = request.headers.get('User-Agent')
+        is_mobile = 'Mobile' in user_agent
         logging.debug(f"Login attempt for username: {username}")
+        logging.debug(f"User Agent: {user_agent}")
+        logging.debug(f"Is Mobile: {is_mobile}")
         try:
             user = User.query.filter_by(username=username).first()
             if user and check_password_hash(user.password, password):
                 login_user(user)
-                logging.info(f"User {username} logged in successfully")
+                logging.info(f"User {username} logged in successfully (Mobile: {is_mobile})")
                 return redirect(url_for('dashboard'))
             else:
-                logging.warning(f"Failed login attempt for username: {username}")
+                logging.warning(f"Failed login attempt for username: {username} (Mobile: {is_mobile})")
                 flash('Invalid username or password')
         except SQLAlchemyError as e:
-            logging.error(f"Database error during login: {str(e)}")
+            logging.error(f"Database error during login: {str(e)} (Mobile: {is_mobile})")
             logging.error(f"Traceback: {traceback.format_exc()}")
             db.session.rollback()
             flash('A database error occurred. Please try again later.')
             return render_template('login.html'), 500
         except Exception as e:
-            logging.error(f"Unexpected error during login: {str(e)}")
+            logging.error(f"Unexpected error during login: {str(e)} (Mobile: {is_mobile})")
             logging.error(f"Traceback: {traceback.format_exc()}")
             flash('An unexpected error occurred. Please try again later.')
             return render_template('login.html'), 500
