@@ -1,0 +1,145 @@
+2024-09-22 20:21:22,376 - INFO - Database configuration loaded successfully
+2024-09-22 20:21:22,376 - DEBUG - Database URI: postgresql://neondb_owner:********@ep-shrill-mouse-a5zxhy1u.us-east-2.aws.neon.tech:5432/neondb
+ * Serving Flask app 'app'
+ * Debug mode: on
+2024-09-22 20:21:26,265 - INFO - WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.31.196.67:5000
+2024-09-22 20:21:26,265 - INFO - Press CTRL+C to quit
+2024-09-22 20:21:26,265 - INFO -  * Restarting with stat
+2024-09-22 20:21:26,658 - INFO - Database configuration loaded successfully
+2024-09-22 20:21:26,658 - DEBUG - Database URI: postgresql://neondb_owner:********@ep-shrill-mouse-a5zxhy1u.us-east-2.aws.neon.tech:5432/neondb
+2024-09-22 20:21:28,356 - WARNING -  * Debugger is active!
+2024-09-22 20:21:28,357 - INFO -  * Debugger PIN: 638-301-747
+2024-09-22 20:21:28,722 - INFO - 172.31.196.67 - - [22/Sep/2024 20:21:28] "GET /login?next=/?initialPath%3D/%26id%3D:r1ec: HTTP/1.1" 200 -
+2024-09-22 20:21:29,054 - INFO - 172.31.196.67 - - [22/Sep/2024 20:21:29] "GET /static/js/main.js HTTP/1.1" 304 -
+2024-09-22 20:21:29,119 - INFO - 172.31.196.67 - - [22/Sep/2024 20:21:29] "GET /static/css/style.css HTTP/1.1" 304 -
+2024-09-22 20:21:55,376 - DEBUG - Login attempt for username: joe
+2024-09-22 20:21:55,376 - DEBUG - User Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Replit/1.0.12 Chrome/124.0.6367.119 Electron/30.0.3 Safari/537.36
+2024-09-22 20:21:55,376 - DEBUG - Is Mobile: False
+2024-09-22 20:21:55,590 - INFO - User joe logged in successfully (Mobile: False)
+2024-09-22 20:21:55,648 - INFO - 172.31.196.67 - - [22/Sep/2024 20:21:55] "POST /login?next=/?initialPath%3D/%26id%3D:r1ec: HTTP/1.1" 302 -
+/home/runner/StockTradeMiddlewareApp/app.py:39: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  return User.query.get(int(user_id))
+2024-09-22 20:21:55,935 - INFO - 172.31.196.67 - - [22/Sep/2024 20:21:55] "GET / HTTP/1.1" 200 -
+2024-09-22 20:21:56,044 - INFO - 172.31.196.67 - - [22/Sep/2024 20:21:56] "GET /static/js/main.js HTTP/1.1" 304 -
+2024-09-22 20:21:56,044 - INFO - 172.31.196.67 - - [22/Sep/2024 20:21:56] "GET /static/css/style.css HTTP/1.1" 304 -
+2024-09-22 20:21:56,578 - INFO - 172.31.196.67 - - [22/Sep/2024 20:21:56] "GET /api/dashboard_stats HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "/home/runner/StockTradeMiddlewareApp/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/runner/StockTradeMiddlewareApp/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+psycopg2.errors.UndefinedColumn: column audit_log.log_file does not exist
+LINE 2: ..._timestamp, audit_log.status AS audit_log_status, audit_log....
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/runner/StockTradeMiddlewareApp/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/StockTradeMiddlewareApp/.pythonlibs/lib/python3.11/site-packages/flask_socketio/__init__.py", line 43, in __call__
+    return super(_SocketIOMiddleware, self).__call__(environ,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/StockTradeMiddlewareApp/.pythonlibs/lib/python3.11/site-packages/engineio/middleware.py", line 74, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/StockTradeMiddlewareApp/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/StockTradeMiddlewareApp/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/StockTradeMiddlewareApp/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/StockTradeMiddlewareApp/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/StockTradeMiddlewareApp/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/StockTradeMiddlewareApp/.pythonlibs/lib/python3.11/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/StockTradeMiddlewareApp/app.py", line 227, in dashboard_stats
+    total_files = AuditLog.query.filter_by(user_id=current_user.id).count()
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/StockTradeMiddlewareApp/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/orm/query.py", line 3113, in count
+    self._legacy_from_self(col).enable_eagerloads(False).scalar()
+  File "/home/runner/StockTradeMiddlewareApp/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/orm/query.py", line 2805, in scalar
+    ret = self.one()
+          ^^^^^^^^^^
+  File "/home/runner/StockTradeMiddlewareApp/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/orm/query.py", line 2778, in one
+    return self._iter().one()  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/StockTradeMiddlewareApp/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/orm/query.py", line 2827, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/StockTradeMiddlewareApp/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2362, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/StockTradeMiddlewareApp/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2247, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/StockTradeMiddlewareApp/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/orm/context.py", line 305, in orm_execute_statement
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "/home/runner/StockTradeMiddlewareApp/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+    return meth(
+           ^^^^^
+  File "/home/runner/StockTradeMiddlewareApp/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/StockTradeMiddlewareApp/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/StockTradeMiddlewareApp/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/StockTradeMiddlewareApp/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/runner/StockTradeMiddlewareApp/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2355, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/runner/StockTradeMiddlewareApp/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/runner/StockTradeMiddlewareApp/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.ProgrammingError: (psycopg2.errors.UndefinedColumn) column audit_log.log_file does not exist
+LINE 2: ..._timestamp, audit_log.status AS audit_log_status, audit_log....
+                                                             ^
+
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT audit_log.id AS audit_log_id, audit_log.user_id AS audit_log_user_id, audit_log.filename AS audit_log_filename, audit_log.timestamp AS audit_log_timestamp, audit_log.status AS audit_log_status, audit_log.log_file AS audit_log_log_file 
+FROM audit_log 
+WHERE audit_log.user_id = %(user_id_1)s) AS anon_1]
+[parameters: {'user_id_1': 1}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+2024-09-22 20:22:02,303 - INFO - Processing file: sample_trades.xml
+2024-09-22 20:22:02,303 - INFO - Starting XML data processing
+2024-09-22 20:22:02,303 - DEBUG - Raw XML content (first 200 chars): <?xml version="1.0" encoding="UTF-8"?>
+<Trades>
+    <Trade>
+        <TradeID>1001</TradeID>
+        <TradeDate>2023-10-01</TradeDate>
+        <Security>AAPL</Security>
+        <Quantity>100</Quantity>
+2024-09-22 20:22:02,304 - INFO - Creating DataFrame with 3 trades
+2024-09-22 20:22:02,305 - INFO - Total trades in XML: 3, Processed trades: 3
+2024-09-22 20:22:02,305 - INFO - Processing trade data with 3 rows
+2024-09-22 20:22:02,309 - INFO - Trade data processed successfully
+2024-09-22 20:22:02,309 - DEBUG - Using selector: EpollSelector
+2024-09-22 20:22:02,312 - WARNING - Attempt 1 failed. Error: Object of type Timestamp is not JSON serializable
+2024-09-22 20:22:02,312 - INFO - Retrying after 2.017589849095473 seconds
+2024-09-22 20:22:04,334 - WARNING - Attempt 2 failed. Error: Object of type Timestamp is not JSON serializable
+2024-09-22 20:22:04,335 - INFO - Retrying after 6.2601897179568695 seconds
+2024-09-22 20:22:10,602 - WARNING - Attempt 3 failed. Error: Object of type Timestamp is not JSON serializable
+2024-09-22 20:22:10,603 - INFO - Retrying after 14.475902497385134 seconds
+2024-09-22 20:22:25,093 - WARNING - Attempt 4 failed. Error: Object of type Timestamp is not JSON serializable
+2024-09-22 20:22:25,094 - INFO - Retrying after 31.336047008932788 seconds
+2024-09-22 20:22:56,462 - WARNING - Attempt 5 failed. Error: Object of type Timestamp is not JSON serializable
+2024-09-22 20:22:56,463 - INFO - Retrying after 65.43262469425197 seconds

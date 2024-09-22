@@ -11,6 +11,7 @@ import socket
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import asyncio
 import aiohttp
+import json
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -97,7 +98,7 @@ async def async_process_chunk(session, chunk, timeout, circuit_breaker):
         return False
 
     try:
-        async with session.post('https://httpbin.org/post', json=chunk.to_dict(), timeout=timeout) as response:
+        async with session.post('https://httpbin.org/post', json=chunk, timeout=timeout) as response:
             if response.status == 200:
                 await response.json()
                 circuit_breaker.record_success()
@@ -110,6 +111,16 @@ async def async_process_chunk(session, chunk, timeout, circuit_breaker):
         logging.warning(f"API call failed: {str(e)}")
         circuit_breaker.record_failure()
         return False
+
+def json_serial(obj):
+    if isinstance(obj, pd.Timestamp):
+        return obj.isoformat()
+    raise TypeError(f'Type {type(obj)} not serializable')
+
+def simulate_external_api_call(trade_data, max_retries=5, timeout=30, chunk_size=10, total_timeout=300):
+    trade_data_json = trade_data.to_dict(orient='records')
+    trade_data_serializable = json.loads(json.dumps(trade_data_json, default=json_serial))
+    return asyncio.run(async_simulate_external_api_call(trade_data_serializable, max_retries, timeout, chunk_size, total_timeout))
 
 async def async_simulate_external_api_call(trade_data, max_retries=5, timeout=30, chunk_size=10, total_timeout=300):
     total_rows = len(trade_data)
@@ -175,9 +186,6 @@ async def process_chunk_with_retry(session, chunk, max_retries, timeout, circuit
     failed = len(chunk)
     logging.error(f"Failed to process chunk of {failed} rows after {attempts} attempts")
     return {'processed': 0, 'failed': failed, 'attempts': attempts, 'delay': delay}
-
-def simulate_external_api_call(trade_data, max_retries=5, timeout=30, chunk_size=10, total_timeout=300):
-    return asyncio.run(async_simulate_external_api_call(trade_data, max_retries, timeout, chunk_size, total_timeout))
 
 def process_xml_data(xml_content, chunk_size=1000, progress_callback=None):
     logging.info("Starting XML data processing")
