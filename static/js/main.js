@@ -38,15 +38,32 @@ function initializeAuditTrail(table) {
 }
 
 function initializeFileUpload(form) {
+    console.log('Initializing file upload form');
     form.addEventListener('submit', function(e) {
+        console.log('Form submit event triggered');
         e.preventDefault();
         const formData = new FormData(form);
+        const submitButton = form.querySelector('button[type="submit"]');
+        
+        console.log('Form data:', formData);
+        console.log('Submit button:', submitButton);
+
+        // Disable the submit button to prevent multiple submissions
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.textContent = 'Uploading...';
+        }
+
         fetch('/upload', {
             method: 'POST',
             body: formData
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Response received:', response);
+            return response.json();
+        })
         .then(data => {
+            console.log('Data received:', data);
             showModal(data.status, data.message, data.details);
             updatePersistentMessage(data.status, data.message);
             if (data.status === 'success' || data.status === 'warning') {
@@ -58,6 +75,13 @@ function initializeFileUpload(form) {
             console.error('Error:', error);
             showModal('error', 'An error occurred while uploading the file.');
             updatePersistentMessage('error', 'An error occurred while uploading the file.');
+        })
+        .finally(() => {
+            // Re-enable the submit button
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Upload and Process';
+            }
         });
     });
 }
@@ -123,8 +147,11 @@ function showModal(status, message, details = null) {
         <p>${message}</p>
         ${details ? `
             <h4>API Simulation Details:</h4>
-            <p>Attempts: ${details.attempts}</p>
+            <p>Attempts: ${details.total_attempts}</p>
             <p>Total Delay: ${details.total_delay.toFixed(2)} seconds</p>
+            <p>Processed Rows: ${details.processed_rows}</p>
+            <p>Failed Rows: ${details.failed_rows}</p>
+            <p>Success Rate: ${(details.success_rate * 100).toFixed(2)}%</p>
         ` : ''}
     `;
     modal.querySelector('.modal-content').appendChild(content);
