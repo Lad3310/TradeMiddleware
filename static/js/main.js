@@ -1,14 +1,61 @@
 document.addEventListener('DOMContentLoaded', function() {
     const auditTrailTable = document.getElementById('audit-trail-table');
+    const fileUploadForm = document.getElementById('file-upload-form');
+    const dashboardStats = document.getElementById('dashboard-stats');
+
     if (auditTrailTable) {
-        auditTrailTable.addEventListener('click', function(e) {
-            if (e.target && e.target.classList.contains('view-trades-btn')) {
-                const auditLogId = e.target.getAttribute('data-audit-log-id');
-                fetchProcessedTrades(auditLogId);
-            }
-        });
+        initializeAuditTrail(auditTrailTable);
+    }
+
+    if (fileUploadForm) {
+        initializeFileUpload(fileUploadForm);
+    }
+
+    if (dashboardStats) {
+        fetchDashboardStats();
     }
 });
+
+function initializeAuditTrail(table) {
+    table.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('view-trades-btn')) {
+            const auditLogId = e.target.getAttribute('data-audit-log-id');
+            fetchProcessedTrades(auditLogId);
+        }
+    });
+
+    const headers = table.querySelectorAll('th');
+    headers.forEach(header => {
+        header.addEventListener('click', () => {
+            const column = header.dataset.column;
+            const order = header.dataset.order = header.dataset.order === 'asc' ? 'desc' : 'asc';
+            sortTable(table, column, order);
+        });
+    });
+}
+
+function initializeFileUpload(form) {
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(form);
+        fetch('/upload', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            showModal(data.status, data.message);
+            if (data.status === 'success') {
+                form.reset();
+                fetchDashboardStats();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showModal('error', 'An error occurred while uploading the file.');
+        });
+    });
+}
 
 function fetchProcessedTrades(auditLogId) {
     fetch(`/api/trades/${auditLogId}`)
@@ -18,54 +65,99 @@ function fetchProcessedTrades(auditLogId) {
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred while fetching trade data.');
+            showModal('error', 'An error occurred while fetching trade data.');
         });
 }
 
 function displayProcessedTrades(trades) {
+    const modal = createModal('Processed Trades');
+    const table = document.createElement('table');
+    table.innerHTML = `
+        <thead>
+            <tr>
+                <th>Trade ID</th>
+                <th>Symbol</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${trades.map(trade => `
+                <tr>
+                    <td>${trade.trade_id}</td>
+                    <td>${trade.symbol}</td>
+                    <td>${trade.quantity}</td>
+                    <td>${trade.price}</td>
+                    <td>${trade.status}</td>
+                </tr>
+            `).join('')}
+        </tbody>
+    `;
+    modal.querySelector('.modal-content').appendChild(table);
+    document.body.appendChild(modal);
+}
+
+function sortTable(table, column, order) {
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    const sortedRows = rows.sort((a, b) => {
+        const aValue = a.querySelector(`td[data-column="${column}"]`).textContent;
+        const bValue = b.querySelector(`td[data-column="${column}"]`).textContent;
+        return order === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+    });
+    tbody.innerHTML = '';
+    sortedRows.forEach(row => tbody.appendChild(row));
+}
+
+function showModal(status, message) {
+    const modal = createModal(status === 'success' ? 'Success' : 'Error');
+    const content = document.createElement('p');
+    content.textContent = message;
+    modal.querySelector('.modal-content').appendChild(content);
+    document.body.appendChild(modal);
+}
+
+function createModal(title) {
     const modal = document.createElement('div');
-    modal.style.position = 'fixed';
-    modal.style.left = '0';
-    modal.style.top = '0';
-    modal.style.width = '100%';
-    modal.style.height = '100%';
-    modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
-    modal.style.display = 'flex';
-    modal.style.justifyContent = 'center';
-    modal.style.alignItems = 'center';
-
-    const content = document.createElement('div');
-    content.style.backgroundColor = '#fff';
-    content.style.padding = '20px';
-    content.style.borderRadius = '5px';
-    content.style.maxWidth = '80%';
-    content.style.maxHeight = '80%';
-    content.style.overflow = 'auto';
-
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = 'Close';
-    closeBtn.onclick = function() {
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>${title}</h2>
+        </div>
+    `;
+    modal.querySelector('.close').onclick = function() {
         document.body.removeChild(modal);
     };
+    return modal;
+}
 
-    const table = document.createElement('table');
-    const headerRow = table.insertRow();
-    ['Trade ID', 'Symbol', 'Quantity', 'Price', 'Status'].forEach(text => {
-        const th = document.createElement('th');
-        th.textContent = text;
-        headerRow.appendChild(th);
-    });
-
-    trades.forEach(trade => {
-        const row = table.insertRow();
-        [trade.trade_id, trade.symbol, trade.quantity, trade.price, trade.status].forEach(text => {
-            const cell = row.insertCell();
-            cell.textContent = text;
+function fetchDashboardStats() {
+    fetch('/api/dashboard_stats')
+        .then(response => response.json())
+        .then(data => {
+            updateDashboardStats(data);
+        })
+        .catch(error => {
+            console.error('Error:', error);
         });
-    });
+}
 
-    content.appendChild(table);
-    content.appendChild(closeBtn);
-    modal.appendChild(content);
-    document.body.appendChild(modal);
+function updateDashboardStats(data) {
+    const statsContainer = document.getElementById('dashboard-stats');
+    if (!statsContainer) return;
+
+    statsContainer.innerHTML = `
+        <h3>Upload Statistics</h3>
+        <p>Total Files: ${data.total_files}</p>
+        <p>Successful Uploads: ${data.successful_uploads}</p>
+        <p>Failed Uploads: ${data.failed_uploads}</p>
+        <h3>Recent Uploads</h3>
+        <ul>
+            ${data.recent_uploads.map(upload => `
+                <li>${upload.filename} - ${upload.status} (${upload.timestamp})</li>
+            `).join('')}
+        </ul>
+    `;
 }

@@ -7,18 +7,18 @@
 <table id="audit-trail-table">
     <thead>
         <tr>
-            <th>Timestamp</th>
-            <th>Filename</th>
-            <th>Status</th>
+            <th data-column="timestamp">Timestamp</th>
+            <th data-column="filename">Filename</th>
+            <th data-column="status">Status</th>
             <th>Actions</th>
         </tr>
     </thead>
     <tbody>
         {% for log in logs %}
         <tr>
-            <td>{{ log.timestamp }}</td>
-            <td>{{ log.filename }}</td>
-            <td>{{ log.status }}</td>
+            <td data-column="timestamp">{{ log.timestamp }}</td>
+            <td data-column="filename">{{ log.filename }}</td>
+            <td data-column="status">{{ log.status }}</td>
             <td>
                 <button class="btn view-trades-btn" data-audit-log-id="{{ log.id }}">View Trades</button>
             </td>

@@ -4,14 +4,20 @@
 
 {% block content %}
 <h2>Welcome, {{ current_user.username }}!</h2>
+
+<div id="dashboard-stats">
+    <!-- Dashboard statistics will be loaded here -->
+</div>
+
 <h3>Upload Trade Data</h3>
-<form method="POST" action="{{ url_for('upload_file') }}" enctype="multipart/form-data">
+<form id="file-upload-form" method="POST" action="{{ url_for('upload_file') }}" enctype="multipart/form-data">
     <div class="form-group">
         <label for="file">Select file (CSV, JSON, or XML):</label>
         <input type="file" id="file" name="file" accept=".csv,.json,.xml" required>
     </div>
     <button type="submit" class="btn">Upload and Process</button>
 </form>
+
 <p>
     <a href="{{ url_for('audit_trail') }}" class="btn">View Audit Trail</a>
 </p>
