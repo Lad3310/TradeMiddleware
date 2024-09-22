@@ -15,6 +15,7 @@ werkzeug = "^3.0.4"
 psycopg2-binary = "^2.9.9"
 lxml = "^5.3.0"
 flask-migrate = "^4.0.7"
+requests = "^2.32.3"
 
 
 [build-system]

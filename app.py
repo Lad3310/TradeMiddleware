@@ -134,7 +134,7 @@ def upload_file():
             api_result = simulate_external_api_call(processed_data)
             
             # Create AuditLog entry
-            audit_log = AuditLog(user_id=current_user.id, filename=file.filename, status='Success' if api_result['success'] else 'Failed')
+            audit_log = AuditLog(user_id=current_user.id, filename=file.filename, status=api_result['status'])
             db.session.add(audit_log)
             db.session.flush()  # Flush the session to get the audit_log_id
             
@@ -145,54 +145,33 @@ def upload_file():
             
             # Create ProcessedTrade entries
             for _, row in processed_data.iterrows():
-                try:
-                    processed_trade = ProcessedTrade(
-                        audit_log_id=audit_log.id,
-                        trade_id=row['trade_id'],
-                        symbol=row['symbol'],
-                        quantity=row['quantity'],
-                        price=row['price'],
-                        status='Processed' if api_result['success'] else 'Failed'
-                    )
-                    db.session.add(processed_trade)
-                except Exception as e:
-                    logging.error(f"Error creating ProcessedTrade: {str(e)}")
-                    logging.error(f"Row data: {row.to_dict()}")
-                    raise
+                processed_trade = ProcessedTrade(
+                    audit_log_id=audit_log.id,
+                    trade_id=row['trade_id'],
+                    symbol=row['symbol'],
+                    quantity=row['quantity'],
+                    price=row['price'],
+                    status='Processed' if _ < api_result['processed_rows'] else 'Failed'
+                )
+                db.session.add(processed_trade)
             
             db.session.commit()
             return jsonify({
-                'status': 'success' if api_result['success'] else 'warning',
+                'status': api_result['status'],
                 'message': api_result['message'],
                 'details': {
-                    'attempts': api_result['attempts'],
+                    'success_rate': api_result['success_rate'],
+                    'processed_rows': api_result['processed_rows'],
+                    'failed_rows': api_result['failed_rows'],
+                    'total_attempts': api_result['total_attempts'],
                     'total_delay': api_result['total_delay']
                 }
             })
-        except ValueError as e:
+        except Exception as e:
             db.session.rollback()
             logging.error(f"Error processing file {file.filename}: {str(e)}")
             logging.error(f"Traceback: {traceback.format_exc()}")
-            return jsonify({'status': 'error', 'message': f'Error processing file: {str(e)}. Please check the file format and try again.'})
-        except pd.errors.EmptyDataError:
-            db.session.rollback()
-            logging.error(f"Empty file error: {file.filename}")
-            return jsonify({'status': 'error', 'message': 'The uploaded file is empty. Please upload a file with data.'})
-        except pd.errors.ParserError as e:
-            db.session.rollback()
-            logging.error(f"Parser error for file {file.filename}: {str(e)}")
-            logging.error(f"Traceback: {traceback.format_exc()}")
-            return jsonify({'status': 'error', 'message': f'Error parsing file: {str(e)}. Please check the file format and try again.'})
-        except SQLAlchemyError as e:
-            db.session.rollback()
-            logging.error(f"Database error while processing file {file.filename}: {str(e)}")
-            logging.error(f"Traceback: {traceback.format_exc()}")
-            return jsonify({'status': 'error', 'message': 'A database error occurred while processing the file. Please try again later.'})
-        except Exception as e:
-            db.session.rollback()
-            logging.error(f"Unexpected error processing file {file.filename}: {str(e)}")
-            logging.error(f"Traceback: {traceback.format_exc()}")
-            return jsonify({'status': 'error', 'message': f'An unexpected error occurred while processing the file: {str(e)}. Please try again later.'})
+            return jsonify({'status': 'error', 'message': f'An error occurred while processing the file: {str(e)}. Please try again later.'})
     else:
         return jsonify({'status': 'error', 'message': 'File type not allowed'})
 
