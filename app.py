@@ -135,19 +135,32 @@ def upload_file():
             
             success = simulate_external_api_call(processed_data)
             
+            # Create AuditLog entry
             audit_log = AuditLog(user_id=current_user.id, filename=file.filename, status='Success' if success else 'Failed')
             db.session.add(audit_log)
+            db.session.flush()  # Flush the session to get the audit_log_id
             
+            if audit_log.id is None:
+                raise ValueError("Failed to generate audit_log_id")
+            
+            logging.info(f"Created AuditLog entry with id: {audit_log.id}")
+            
+            # Create ProcessedTrade entries
             for _, row in processed_data.iterrows():
-                processed_trade = ProcessedTrade(
-                    audit_log_id=audit_log.id,
-                    trade_id=row['trade_id'],
-                    symbol=row['symbol'],
-                    quantity=row['quantity'],
-                    price=row['price'],
-                    status='Processed' if success else 'Failed'
-                )
-                db.session.add(processed_trade)
+                try:
+                    processed_trade = ProcessedTrade(
+                        audit_log_id=audit_log.id,
+                        trade_id=row['trade_id'],
+                        symbol=row['symbol'],
+                        quantity=row['quantity'],
+                        price=row['price'],
+                        status='Processed' if success else 'Failed'
+                    )
+                    db.session.add(processed_trade)
+                except Exception as e:
+                    logging.error(f"Error creating ProcessedTrade: {str(e)}")
+                    logging.error(f"Row data: {row.to_dict()}")
+                    raise
             
             db.session.commit()
             flash('File processed and transmitted successfully' if success else 'File processed but transmission failed')
@@ -165,6 +178,11 @@ def upload_file():
             logging.error(f"Parser error for file {file.filename}: {str(e)}")
             logging.error(f"Traceback: {traceback.format_exc()}")
             flash(f'Error parsing file: {str(e)}. Please check the file format and try again.')
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            logging.error(f"Database error while processing file {file.filename}: {str(e)}")
+            logging.error(f"Traceback: {traceback.format_exc()}")
+            flash(f'A database error occurred while processing the file. Please try again later.')
         except Exception as e:
             db.session.rollback()
             logging.error(f"Unexpected error processing file {file.filename}: {str(e)}")
