@@ -159,7 +159,7 @@ def simulate_external_api_call(trade_data, max_retries=5, timeout=30, chunk_size
     logging.info(f"API simulation completed. Result: {result}")
     return result
 
-def process_xml_data(xml_content, chunk_size=1000):
+def process_xml_data(xml_content, chunk_size=1000, progress_callback=None):
     logging.info("Starting XML data processing")
     try:
         logging.debug(f"Raw XML content (first 200 chars): {xml_content[:200].decode('utf-8')}")
@@ -201,6 +201,8 @@ def process_xml_data(xml_content, chunk_size=1000):
                     
                     if processed_trades % 100 == 0:
                         logging.info(f"Processed {processed_trades} trades")
+                        if progress_callback:
+                            progress_callback(processed_trades, total_trades)
                     
                 except Exception as e:
                     logging.error(f"Error processing trade element: {e}")
