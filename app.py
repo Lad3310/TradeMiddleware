@@ -1,8 +1,9 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from config import Config
 from utils import process_trade_data, process_xml_data, allowed_file, simulate_external_api_call
 import pandas as pd
@@ -13,37 +14,17 @@ from flask_socketio import SocketIO
 import time
 from lxml import etree
 from sqlalchemy import func
+from models import db, User, AuditLog, ProcessedTrade
 
 app = Flask(__name__)
 app.config.from_object(Config)
-db = SQLAlchemy(app)
+db.init_app(app)
+migrate = Migrate(app, db)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 socketio = SocketIO(app)
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-
-class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), unique=True, nullable=False)
-    password = db.Column(db.String(128), nullable=False)
-
-class AuditLog(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    filename = db.Column(db.String(128), nullable=False)
-    timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())
-    status = db.Column(db.String(20), nullable=False)
-    log_file = db.Column(db.String(128), nullable=True)
-
-class ProcessedTrade(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    audit_log_id = db.Column(db.Integer, db.ForeignKey('audit_log.id'), nullable=False)
-    trade_id = db.Column(db.String(64), nullable=False)
-    symbol = db.Column(db.String(10), nullable=False)
-    quantity = db.Column(db.Integer, nullable=False)
-    price = db.Column(db.Float, nullable=False)
-    status = db.Column(db.String(20), nullable=False)
 
 @login_manager.user_loader
 def load_user(user_id):
