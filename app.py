@@ -130,10 +130,10 @@ def upload_file():
             else:
                 return jsonify({'status': 'error', 'message': 'Unsupported file format'})
             
-            success = simulate_external_api_call(processed_data)
+            api_result = simulate_external_api_call(processed_data)
             
             # Create AuditLog entry
-            audit_log = AuditLog(user_id=current_user.id, filename=file.filename, status='Success' if success else 'Failed')
+            audit_log = AuditLog(user_id=current_user.id, filename=file.filename, status='Success' if api_result['success'] else 'Failed')
             db.session.add(audit_log)
             db.session.flush()  # Flush the session to get the audit_log_id
             
@@ -151,7 +151,7 @@ def upload_file():
                         symbol=row['symbol'],
                         quantity=row['quantity'],
                         price=row['price'],
-                        status='Processed' if success else 'Failed'
+                        status='Processed' if api_result['success'] else 'Failed'
                     )
                     db.session.add(processed_trade)
                 except Exception as e:
@@ -160,8 +160,14 @@ def upload_file():
                     raise
             
             db.session.commit()
-            message = 'File processed and transmitted successfully' if success else 'File processed but transmission failed after multiple retries'
-            return jsonify({'status': 'success' if success else 'warning', 'message': message})
+            return jsonify({
+                'status': 'success' if api_result['success'] else 'warning',
+                'message': api_result['message'],
+                'details': {
+                    'attempts': api_result['attempts'],
+                    'total_delay': api_result['total_delay']
+                }
+            })
         except ValueError as e:
             db.session.rollback()
             logging.error(f"Error processing file {file.filename}: {str(e)}")

@@ -44,7 +44,7 @@ function initializeFileUpload(form) {
         })
         .then(response => response.json())
         .then(data => {
-            showModal(data.status, data.message);
+            showModal(data.status, data.message, data.details);
             if (data.status === 'success') {
                 form.reset();
                 fetchDashboardStats();
@@ -110,10 +110,17 @@ function sortTable(table, column, order) {
     sortedRows.forEach(row => tbody.appendChild(row));
 }
 
-function showModal(status, message) {
-    const modal = createModal(status === 'success' ? 'Success' : 'Error');
-    const content = document.createElement('p');
-    content.textContent = message;
+function showModal(status, message, details = null) {
+    const modal = createModal(status === 'success' ? 'Success' : status === 'warning' ? 'Warning' : 'Error');
+    const content = document.createElement('div');
+    content.innerHTML = `
+        <p>${message}</p>
+        ${details ? `
+            <h4>API Simulation Details:</h4>
+            <p>Attempts: ${details.attempts}</p>
+            <p>Total Delay: ${details.total_delay.toFixed(2)} seconds</p>
+        ` : ''}
+    `;
     modal.querySelector('.modal-content').appendChild(content);
     document.body.appendChild(modal);
 }

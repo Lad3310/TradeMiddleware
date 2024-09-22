@@ -80,24 +80,38 @@ def exponential_backoff(attempt, max_delay=60):
     return delay + jitter
 
 def simulate_external_api_call(trade_data, max_retries=3):
+    attempts = 0
+    total_delay = 0
     for attempt in range(max_retries):
+        attempts += 1
         try:
             # Simulate API call with potential failures
             success_rate = 0.7  # 70% success rate
             if random.random() < success_rate:
                 logging.info(f"External API call successful on attempt {attempt + 1}")
-                return True
+                return {
+                    'success': True,
+                    'attempts': attempts,
+                    'total_delay': total_delay,
+                    'message': f"API call successful on attempt {attempt + 1}"
+                }
             else:
                 raise Exception("Simulated API failure")
         except Exception as e:
             logging.error(f"External API call failed on attempt {attempt + 1}: {str(e)}")
             if attempt < max_retries - 1:
                 delay = exponential_backoff(attempt)
+                total_delay += delay
                 logging.info(f"Retrying in {delay:.2f} seconds")
                 time.sleep(delay)
             else:
                 logging.error("Max retries reached. External API call failed.")
-                return False
+                return {
+                    'success': False,
+                    'attempts': attempts,
+                    'total_delay': total_delay,
+                    'message': f"API call failed after {attempts} attempts. Total delay: {total_delay:.2f} seconds"
+                }
 
 def process_xml_data(xml_content):
     logging.info("Starting XML data processing")
