@@ -88,7 +88,7 @@ def process_xml_data(xml_content):
     logging.info("Starting XML data processing")
     try:
         # Log the first 200 characters of XML content for debugging
-        logging.debug(f"Raw XML content (first 200 chars): {xml_content[:200]}")
+        logging.debug(f"Raw XML content (first 200 chars): {xml_content[:200].decode('utf-8')}")
         
         # Parse XML content
         root = etree.fromstring(xml_content)
@@ -143,4 +143,3 @@ def process_xml_data(xml_content):
         logging.error(f"Unexpected error processing XML data: {e}")
         logging.error(f"Traceback: {traceback.format_exc()}")
         raise ValueError(f"Error processing XML data: {e}")
-

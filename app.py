@@ -10,6 +10,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from flask_migrate import Migrate
 import traceback
 import io
+from lxml import etree
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
@@ -119,7 +120,16 @@ def upload_file():
                 df = pd.read_json(io.StringIO(file_content.decode('utf-8')))
                 processed_data = process_trade_data(df)
             elif file_extension == 'xml':
-                processed_data = process_xml_data(file_content)
+                try:
+                    processed_data = process_xml_data(file_content)
+                except ValueError as xml_error:
+                    logging.error(f"XML processing error: {str(xml_error)}")
+                    flash(f'Error processing XML file: {str(xml_error)}. Please check the file format and try again.')
+                    return redirect(url_for('dashboard'))
+                except etree.XMLSyntaxError as xml_syntax_error:
+                    logging.error(f"XML syntax error: {str(xml_syntax_error)}")
+                    flash(f'Invalid XML format: {str(xml_syntax_error)}. Please check the file and try again.')
+                    return redirect(url_for('dashboard'))
             else:
                 raise ValueError("Unsupported file format")
             
@@ -145,7 +155,7 @@ def upload_file():
             db.session.rollback()
             logging.error(f"Error processing file {file.filename}: {str(e)}")
             logging.error(f"Traceback: {traceback.format_exc()}")
-            flash(f'Error processing file: {str(e)}')
+            flash(f'Error processing file: {str(e)}. Please check the file format and try again.')
         except pd.errors.EmptyDataError:
             db.session.rollback()
             logging.error(f"Empty file error: {file.filename}")
@@ -159,7 +169,7 @@ def upload_file():
             db.session.rollback()
             logging.error(f"Unexpected error processing file {file.filename}: {str(e)}")
             logging.error(f"Traceback: {traceback.format_exc()}")
-            flash(f'An unexpected error occurred while processing the file. Please try again later.')
+            flash(f'An unexpected error occurred while processing the file: {str(e)}. Please try again later.')
     else:
         flash('File type not allowed')
     return redirect(url_for('dashboard'))
