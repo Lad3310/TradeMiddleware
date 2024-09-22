@@ -11,6 +11,7 @@ from flask_migrate import Migrate
 import traceback
 import io
 from lxml import etree
+from sqlalchemy import func
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
@@ -101,12 +102,10 @@ def logout():
 @login_required
 def upload_file():
     if 'file' not in request.files:
-        flash('No file part')
-        return redirect(url_for('dashboard'))
+        return jsonify({'status': 'error', 'message': 'No file part'})
     file = request.files['file']
     if file.filename == '':
-        flash('No selected file')
-        return redirect(url_for('dashboard'))
+        return jsonify({'status': 'error', 'message': 'No selected file'})
     if file and allowed_file(file.filename):
         try:
             logging.info(f"Processing file: {file.filename}")
@@ -124,14 +123,12 @@ def upload_file():
                     processed_data = process_xml_data(file_content)
                 except ValueError as xml_error:
                     logging.error(f"XML processing error: {str(xml_error)}")
-                    flash(f'Error processing XML file: {str(xml_error)}. Please check the file format and try again.')
-                    return redirect(url_for('dashboard'))
+                    return jsonify({'status': 'error', 'message': f'Error processing XML file: {str(xml_error)}. Please check the file format and try again.'})
                 except etree.XMLSyntaxError as xml_syntax_error:
                     logging.error(f"XML syntax error: {str(xml_syntax_error)}")
-                    flash(f'Invalid XML format: {str(xml_syntax_error)}. Please check the file and try again.')
-                    return redirect(url_for('dashboard'))
+                    return jsonify({'status': 'error', 'message': f'Invalid XML format: {str(xml_syntax_error)}. Please check the file and try again.'})
             else:
-                raise ValueError("Unsupported file format")
+                return jsonify({'status': 'error', 'message': 'Unsupported file format'})
             
             success = simulate_external_api_call(processed_data)
             
@@ -163,34 +160,33 @@ def upload_file():
                     raise
             
             db.session.commit()
-            flash('File processed and transmitted successfully' if success else 'File processed but transmission failed')
+            return jsonify({'status': 'success', 'message': 'File processed and transmitted successfully' if success else 'File processed but transmission failed'})
         except ValueError as e:
             db.session.rollback()
             logging.error(f"Error processing file {file.filename}: {str(e)}")
             logging.error(f"Traceback: {traceback.format_exc()}")
-            flash(f'Error processing file: {str(e)}. Please check the file format and try again.')
+            return jsonify({'status': 'error', 'message': f'Error processing file: {str(e)}. Please check the file format and try again.'})
         except pd.errors.EmptyDataError:
             db.session.rollback()
             logging.error(f"Empty file error: {file.filename}")
-            flash('The uploaded file is empty. Please upload a file with data.')
+            return jsonify({'status': 'error', 'message': 'The uploaded file is empty. Please upload a file with data.'})
         except pd.errors.ParserError as e:
             db.session.rollback()
             logging.error(f"Parser error for file {file.filename}: {str(e)}")
             logging.error(f"Traceback: {traceback.format_exc()}")
-            flash(f'Error parsing file: {str(e)}. Please check the file format and try again.')
+            return jsonify({'status': 'error', 'message': f'Error parsing file: {str(e)}. Please check the file format and try again.'})
         except SQLAlchemyError as e:
             db.session.rollback()
             logging.error(f"Database error while processing file {file.filename}: {str(e)}")
             logging.error(f"Traceback: {traceback.format_exc()}")
-            flash(f'A database error occurred while processing the file. Please try again later.')
+            return jsonify({'status': 'error', 'message': 'A database error occurred while processing the file. Please try again later.'})
         except Exception as e:
             db.session.rollback()
             logging.error(f"Unexpected error processing file {file.filename}: {str(e)}")
             logging.error(f"Traceback: {traceback.format_exc()}")
-            flash(f'An unexpected error occurred while processing the file: {str(e)}. Please try again later.')
+            return jsonify({'status': 'error', 'message': f'An unexpected error occurred while processing the file: {str(e)}. Please try again later.'})
     else:
-        flash('File type not allowed')
-    return redirect(url_for('dashboard'))
+        return jsonify({'status': 'error', 'message': 'File type not allowed'})
 
 @app.route('/audit_trail')
 @login_required
@@ -209,6 +205,28 @@ def get_processed_trades(audit_log_id):
         'price': trade.price,
         'status': trade.status
     } for trade in trades])
+
+@app.route('/api/dashboard_stats')
+@login_required
+def dashboard_stats():
+    total_files = AuditLog.query.filter_by(user_id=current_user.id).count()
+    successful_uploads = AuditLog.query.filter_by(user_id=current_user.id, status='Success').count()
+    failed_uploads = AuditLog.query.filter_by(user_id=current_user.id, status='Failed').count()
+    
+    recent_uploads = AuditLog.query.filter_by(user_id=current_user.id).order_by(AuditLog.timestamp.desc()).limit(5).all()
+    recent_uploads_data = [{
+        'id': log.id,
+        'timestamp': log.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+        'filename': log.filename,
+        'status': log.status
+    } for log in recent_uploads]
+
+    return jsonify({
+        'total_files': total_files,
+        'successful_uploads': successful_uploads,
+        'failed_uploads': failed_uploads,
+        'recent_uploads': recent_uploads_data
+    })
 
 @app.errorhandler(404)
 def not_found_error(error):
