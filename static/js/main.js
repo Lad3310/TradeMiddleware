@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (dashboardStats) {
         fetchDashboardStats();
     }
+
+    // Create persistent message area
+    createPersistentMessageArea();
 });
 
 function initializeAuditTrail(table) {
@@ -45,7 +48,8 @@ function initializeFileUpload(form) {
         .then(response => response.json())
         .then(data => {
             showModal(data.status, data.message, data.details);
-            if (data.status === 'success') {
+            updatePersistentMessage(data.status, data.message);
+            if (data.status === 'success' || data.status === 'warning') {
                 form.reset();
                 fetchDashboardStats();
             }
@@ -53,6 +57,7 @@ function initializeFileUpload(form) {
         .catch(error => {
             console.error('Error:', error);
             showModal('error', 'An error occurred while uploading the file.');
+            updatePersistentMessage('error', 'An error occurred while uploading the file.');
         });
     });
 }
@@ -112,6 +117,7 @@ function sortTable(table, column, order) {
 
 function showModal(status, message, details = null) {
     const modal = createModal(status === 'success' ? 'Success' : status === 'warning' ? 'Warning' : 'Error');
+    modal.classList.add(status);
     const content = document.createElement('div');
     content.innerHTML = `
         <p>${message}</p>
@@ -123,6 +129,16 @@ function showModal(status, message, details = null) {
     `;
     modal.querySelector('.modal-content').appendChild(content);
     document.body.appendChild(modal);
+
+    // Add animation
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
+
+    // Auto-close after 5 seconds
+    setTimeout(() => {
+        closeModal(modal);
+    }, 5000);
 }
 
 function createModal(title) {
@@ -135,9 +151,35 @@ function createModal(title) {
         </div>
     `;
     modal.querySelector('.close').onclick = function() {
-        document.body.removeChild(modal);
+        closeModal(modal);
     };
     return modal;
+}
+
+function closeModal(modal) {
+    modal.classList.remove('show');
+    setTimeout(() => {
+        document.body.removeChild(modal);
+    }, 300);
+}
+
+function createPersistentMessageArea() {
+    const messageArea = document.createElement('div');
+    messageArea.id = 'persistent-message';
+    messageArea.className = 'persistent-message';
+    document.body.insertBefore(messageArea, document.body.firstChild);
+}
+
+function updatePersistentMessage(status, message) {
+    const messageArea = document.getElementById('persistent-message');
+    messageArea.className = `persistent-message ${status}`;
+    messageArea.textContent = message;
+    messageArea.style.display = 'block';
+
+    // Hide the message after 5 seconds
+    setTimeout(() => {
+        messageArea.style.display = 'none';
+    }, 5000);
 }
 
 function fetchDashboardStats() {
@@ -166,5 +208,9 @@ function updateDashboardStats(data) {
                 <li>${upload.filename} - ${upload.status} (${upload.timestamp})</li>
             `).join('')}
         </ul>
+        ${data.recent_uploads.length > 0 ? `
+            <h3>Latest Upload Status</h3>
+            <p class="${data.recent_uploads[0].status.toLowerCase()}">${data.recent_uploads[0].status}: ${data.recent_uploads[0].filename}</p>
+        ` : ''}
     `;
 }
