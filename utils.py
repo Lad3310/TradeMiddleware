@@ -57,19 +57,53 @@ def process_trade_data(df):
     logging.info("Trade data processed successfully")
     return df
 
-def exponential_backoff(attempt, base_delay=1, max_delay=60):
-    delay = min(base_delay * (2 ** attempt), max_delay)
-    jitter = random.uniform(0, 0.1 * delay)
-    return delay + jitter
+def exponential_backoff(attempt, base_delay=1, max_delay=60, factor=2, jitter=0.1):
+    delay = min(base_delay * (factor ** attempt), max_delay)
+    jitter_value = random.uniform(0, jitter * delay)
+    return delay + jitter_value
+
+class CircuitBreaker:
+    def __init__(self, failure_threshold=5, reset_timeout=30):
+        self.failure_count = 0
+        self.failure_threshold = failure_threshold
+        self.reset_timeout = reset_timeout
+        self.last_failure_time = None
+        self.state = "CLOSED"
+
+    def record_failure(self):
+        self.failure_count += 1
+        if self.failure_count >= self.failure_threshold:
+            self.state = "OPEN"
+            self.last_failure_time = time.time()
+
+    def record_success(self):
+        self.failure_count = 0
+        self.state = "CLOSED"
+
+    def allow_request(self):
+        if self.state == "CLOSED":
+            return True
+        elif self.state == "OPEN":
+            if time.time() - self.last_failure_time > self.reset_timeout:
+                self.state = "HALF-OPEN"
+                return True
+        return False
 
 def simulate_external_api_call(trade_data, max_retries=5, timeout=30, chunk_size=10, total_timeout=300):
+    circuit_breaker = CircuitBreaker()
+
     def process_chunk(chunk):
-        time.sleep(random.uniform(0.1, 0.5))
+        if not circuit_breaker.allow_request():
+            raise Exception("Circuit breaker is open")
+
         try:
+            time.sleep(random.uniform(0.1, 0.5))
             response = requests.post('https://httpbin.org/post', json=chunk.to_dict(), timeout=timeout)
             response.raise_for_status()
+            circuit_breaker.record_success()
             return True
         except (RequestException, Timeout, ConnectionError) as e:
+            circuit_breaker.record_failure()
             logging.warning(f"API call failed: {str(e)}")
             raise
 
@@ -100,7 +134,7 @@ def simulate_external_api_call(trade_data, max_retries=5, timeout=30, chunk_size
                     logging.info(f"Processed chunk {i//chunk_size + 1}/{(total_rows + chunk_size - 1)//chunk_size}")
                 else:
                     raise RequestException("Chunk processing failed")
-            except (RequestException, Timeout, ConnectionError) as e:
+            except Exception as e:
                 delay = exponential_backoff(attempts - 1)
                 total_delay += delay
                 logging.warning(f"Attempt {attempts} failed for chunk {i//chunk_size + 1}. Retrying in {delay:.2f} seconds. Error: {str(e)}")
