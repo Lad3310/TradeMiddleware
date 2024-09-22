@@ -18,6 +18,14 @@ from models import db, User, AuditLog, ProcessedTrade
 
 app = Flask(__name__)
 app.config.from_object(Config)
+
+# Add UPLOAD_FOLDER configuration
+app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'uploads')
+
+# Create 'uploads' directory if it doesn't exist
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
+
 db.init_app(app)
 migrate = Migrate(app, db)
 login_manager = LoginManager(app)
