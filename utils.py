@@ -6,7 +6,9 @@ import io
 import time
 import random
 import requests
-from requests.exceptions import RequestException, Timeout
+from requests.exceptions import RequestException, Timeout, ConnectionError
+import socket
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -60,15 +62,14 @@ def exponential_backoff(attempt, base_delay=1, max_delay=60):
     jitter = random.uniform(0, 0.1 * delay)
     return delay + jitter
 
-def simulate_external_api_call(trade_data, max_retries=5, timeout=30, chunk_size=10):
+def simulate_external_api_call(trade_data, max_retries=5, timeout=30, chunk_size=10, total_timeout=300):
     def process_chunk(chunk):
         time.sleep(random.uniform(0.1, 0.5))
         try:
-            # Simulate an API call with a potential timeout
-            response = requests.get('https://api.example.com/process', params={'data': chunk.to_json()}, timeout=timeout)
+            response = requests.post('https://httpbin.org/post', json=chunk.to_dict(), timeout=timeout)
             response.raise_for_status()
             return True
-        except (RequestException, Timeout) as e:
+        except (RequestException, Timeout, ConnectionError) as e:
             logging.warning(f"API call failed: {str(e)}")
             raise
 
@@ -77,8 +78,13 @@ def simulate_external_api_call(trade_data, max_retries=5, timeout=30, chunk_size
     failed_rows = 0
     total_attempts = 0
     total_delay = 0
+    start_time = time.time()
 
     for i in range(0, total_rows, chunk_size):
+        if time.time() - start_time > total_timeout:
+            logging.error(f"Total timeout of {total_timeout} seconds exceeded. Stopping processing.")
+            break
+
         chunk = trade_data[i:i+chunk_size]
         chunk_processed = False
         attempts = 0
@@ -94,7 +100,7 @@ def simulate_external_api_call(trade_data, max_retries=5, timeout=30, chunk_size
                     logging.info(f"Processed chunk {i//chunk_size + 1}/{(total_rows + chunk_size - 1)//chunk_size}")
                 else:
                     raise RequestException("Chunk processing failed")
-            except (RequestException, Timeout) as e:
+            except (RequestException, Timeout, ConnectionError) as e:
                 delay = exponential_backoff(attempts - 1)
                 total_delay += delay
                 logging.warning(f"Attempt {attempts} failed for chunk {i//chunk_size + 1}. Retrying in {delay:.2f} seconds. Error: {str(e)}")
@@ -104,7 +110,7 @@ def simulate_external_api_call(trade_data, max_retries=5, timeout=30, chunk_size
             failed_rows += len(chunk)
             logging.error(f"Failed to process chunk {i//chunk_size + 1} after {max_retries} attempts")
 
-    success_rate = processed_rows / total_rows
+    success_rate = processed_rows / total_rows if total_rows > 0 else 0
     status = 'success' if success_rate > 0.8 else 'partial_success' if success_rate > 0 else 'failure'
 
     result = {
@@ -119,45 +125,75 @@ def simulate_external_api_call(trade_data, max_retries=5, timeout=30, chunk_size
     logging.info(f"API simulation completed. Result: {result}")
     return result
 
-def process_xml_data(xml_content):
+def process_xml_data(xml_content, chunk_size=1000):
     logging.info("Starting XML data processing")
     try:
         logging.debug(f"Raw XML content (first 200 chars): {xml_content[:200].decode('utf-8')}")
         
-        root = etree.fromstring(xml_content)
-        logging.info(f"XML root element: {root.tag}")
+        context = etree.iterparse(io.BytesIO(xml_content), events=('end',), tag='Trade')
         
         data = []
-        for trade in root.findall('Trade'):
-            logging.debug(f"Processing trade element: {etree.tostring(trade, encoding='unicode')}")
-            try:
-                trade_data = {
-                    'trade_id': trade.findtext('TradeID'),
-                    'symbol': trade.findtext('Security'),
-                    'quantity': trade.findtext('Quantity'),
-                    'price': trade.findtext('Price')
-                }
-                
-                missing_fields = [field for field, value in trade_data.items() if value is None]
-                if missing_fields:
-                    logging.warning(f"Trade is missing required fields: {', '.join(missing_fields)}")
-                    logging.warning(f"Skipping trade: {etree.tostring(trade, encoding='unicode')}")
-                    continue
-                
+        total_trades = 0
+        processed_trades = 0
+        
+        def process_trade_chunk(chunk):
+            nonlocal processed_trades
+            chunk_data = []
+            for trade_elem in chunk:
                 try:
-                    trade_data['quantity'] = int(trade_data['quantity'])
-                    trade_data['price'] = float(trade_data['price'])
-                except ValueError as e:
-                    logging.error(f"Error converting data types: {e}")
-                    logging.error(f"Problematic trade element: {etree.tostring(trade, encoding='unicode')}")
-                    continue
+                    trade_data = {
+                        'trade_id': trade_elem.findtext('TradeID'),
+                        'symbol': trade_elem.findtext('Security'),
+                        'quantity': trade_elem.findtext('Quantity'),
+                        'price': trade_elem.findtext('Price')
+                    }
+                    
+                    missing_fields = [field for field, value in trade_data.items() if value is None]
+                    if missing_fields:
+                        logging.warning(f"Trade is missing required fields: {', '.join(missing_fields)}")
+                        logging.warning(f"Skipping trade: {etree.tostring(trade_elem, encoding='unicode')}")
+                        continue
+                    
+                    try:
+                        trade_data['quantity'] = int(trade_data['quantity'])
+                        trade_data['price'] = float(trade_data['price'])
+                    except ValueError as e:
+                        logging.error(f"Error converting data types: {e}")
+                        logging.error(f"Problematic trade element: {etree.tostring(trade_elem, encoding='unicode')}")
+                        continue
+                    
+                    chunk_data.append(trade_data)
+                    processed_trades += 1
+                    
+                    if processed_trades % 100 == 0:
+                        logging.info(f"Processed {processed_trades} trades")
+                    
+                except Exception as e:
+                    logging.error(f"Error processing trade element: {e}")
+                    logging.error(f"Problematic trade element: {etree.tostring(trade_elem, encoding='unicode')}")
+                    logging.error(f"Traceback: {traceback.format_exc()}")
                 
-                logging.debug(f"Processed trade data: {trade_data}")
-                data.append(trade_data)
-            except Exception as e:
-                logging.error(f"Error processing trade element: {e}")
-                logging.error(f"Problematic trade element: {etree.tostring(trade, encoding='unicode')}")
-                logging.error(f"Traceback: {traceback.format_exc()}")
+                trade_elem.clear()
+            
+            return chunk_data
+        
+        chunk = []
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            futures = []
+            for event, elem in context:
+                if elem.tag == 'Trade':
+                    chunk.append(elem)
+                    total_trades += 1
+                    
+                    if len(chunk) == chunk_size:
+                        futures.append(executor.submit(process_trade_chunk, chunk))
+                        chunk = []
+            
+            if chunk:
+                futures.append(executor.submit(process_trade_chunk, chunk))
+            
+            for future in as_completed(futures):
+                data.extend(future.result())
         
         if not data:
             logging.error("No valid trade data found in the XML file")
@@ -165,6 +201,7 @@ def process_xml_data(xml_content):
         
         logging.info(f"Creating DataFrame with {len(data)} trades")
         df = pd.DataFrame(data)
+        logging.info(f"Total trades in XML: {total_trades}, Processed trades: {processed_trades}")
         return process_trade_data(df)
     except etree.XMLSyntaxError as e:
         logging.error(f"XML Syntax Error: {e}")

@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const auditTrailTable = document.getElementById('audit-trail-table');
     const fileUploadForm = document.getElementById('file-upload-form');
     const dashboardStats = document.getElementById('dashboard-stats');
+    const progressContainer = document.getElementById('progress-container');
 
     if (auditTrailTable) {
         initializeAuditTrail(auditTrailTable);
@@ -15,7 +16,6 @@ document.addEventListener('DOMContentLoaded', function() {
         fetchDashboardStats();
     }
 
-    // Create persistent message area
     createPersistentMessageArea();
 });
 
@@ -44,15 +44,19 @@ function initializeFileUpload(form) {
         e.preventDefault();
         const formData = new FormData(form);
         const submitButton = form.querySelector('button[type="submit"]');
+        const progressContainer = document.getElementById('progress-container');
         
         console.log('Form data:', formData);
         console.log('Submit button:', submitButton);
 
-        // Disable the submit button to prevent multiple submissions
         if (submitButton) {
             submitButton.disabled = true;
             submitButton.textContent = 'Uploading...';
         }
+
+        progressContainer.style.display = 'none';
+        document.getElementById('progress-bar-fill').style.width = '0%';
+        document.getElementById('progress-text').textContent = '0%';
 
         fetch('/upload', {
             method: 'POST',
@@ -77,11 +81,11 @@ function initializeFileUpload(form) {
             updatePersistentMessage('error', 'An error occurred while uploading the file.');
         })
         .finally(() => {
-            // Re-enable the submit button
             if (submitButton) {
                 submitButton.disabled = false;
                 submitButton.textContent = 'Upload and Process';
             }
+            progressContainer.style.display = 'none';
         });
     });
 }
@@ -157,12 +161,10 @@ function showModal(status, message, details = null) {
     modal.querySelector('.modal-content').appendChild(content);
     document.body.appendChild(modal);
 
-    // Add animation
     setTimeout(() => {
         modal.classList.add('show');
     }, 10);
 
-    // Auto-close after 5 seconds
     setTimeout(() => {
         closeModal(modal);
     }, 5000);
@@ -203,7 +205,6 @@ function updatePersistentMessage(status, message) {
     messageArea.textContent = message;
     messageArea.style.display = 'block';
 
-    // Hide the message after 5 seconds
     setTimeout(() => {
         messageArea.style.display = 'none';
     }, 5000);
@@ -241,3 +242,15 @@ function updateDashboardStats(data) {
         ` : ''}
     `;
 }
+
+const socket = io();
+socket.on('processing_progress', function(data) {
+    const progressContainer = document.getElementById('progress-container');
+    const progressBarFill = document.getElementById('progress-bar-fill');
+    const progressText = document.getElementById('progress-text');
+    
+    progressContainer.style.display = 'block';
+    const percentage = Math.round((data.processed / data.total) * 100);
+    progressBarFill.style.width = percentage + '%';
+    progressText.textContent = percentage + '%';
+});

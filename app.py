@@ -12,6 +12,7 @@ import traceback
 import io
 from lxml import etree
 from sqlalchemy import func
+from flask_socketio import SocketIO
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
@@ -21,6 +22,7 @@ migrate = Migrate(app, db)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+socketio = SocketIO(app)
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -123,7 +125,10 @@ def upload_file():
                 processed_data = process_trade_data(df)
             elif file_extension == 'xml':
                 try:
-                    processed_data = process_xml_data(file_content)
+                    def progress_callback(processed, total):
+                        socketio.emit('processing_progress', {'processed': processed, 'total': total})
+
+                    processed_data = process_xml_data(file_content, progress_callback=progress_callback)
                 except ValueError as xml_error:
                     logging.error(f"XML processing error: {str(xml_error)}")
                     return jsonify({'status': 'error', 'message': f'Error processing XML file: {str(xml_error)}. Please check the file format and try again.'})
@@ -135,7 +140,7 @@ def upload_file():
             
             logging.info(f"File processed successfully. Rows: {len(processed_data)}")
             
-            api_result = simulate_external_api_call(processed_data)
+            api_result = simulate_external_api_call(processed_data, max_retries=5, timeout=30, chunk_size=10, total_timeout=300)
             
             audit_log = AuditLog(user_id=current_user.id, filename=file.filename, status=api_result['status'])
             db.session.add(audit_log)
@@ -200,8 +205,8 @@ def get_processed_trades(audit_log_id):
 @login_required
 def dashboard_stats():
     total_files = AuditLog.query.filter_by(user_id=current_user.id).count()
-    successful_uploads = AuditLog.query.filter_by(user_id=current_user.id, status='Success').count()
-    failed_uploads = AuditLog.query.filter_by(user_id=current_user.id, status='Failed').count()
+    successful_uploads = AuditLog.query.filter_by(user_id=current_user.id, status='success').count()
+    failed_uploads = AuditLog.query.filter_by(user_id=current_user.id, status='failure').count()
     
     recent_uploads = AuditLog.query.filter_by(user_id=current_user.id).order_by(AuditLog.timestamp.desc()).limit(5).all()
     recent_uploads_data = [{
@@ -231,4 +236,4 @@ def internal_error(error):
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True)

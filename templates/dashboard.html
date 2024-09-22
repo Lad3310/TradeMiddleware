@@ -18,7 +18,32 @@
     <button type="submit" class="btn">Upload and Process</button>
 </form>
 
+<div id="progress-container" style="display: none;">
+    <h4>Processing Progress</h4>
+    <div class="progress-bar">
+        <div id="progress-bar-fill" style="width: 0%;"></div>
+    </div>
+    <p id="progress-text">0%</p>
+</div>
+
 <p>
     <a href="{{ url_for('audit_trail') }}" class="btn">View Audit Trail</a>
 </p>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script>
+    var socket = io();
+    socket.on('processing_progress', function(data) {
+        var progressContainer = document.getElementById('progress-container');
+        var progressBarFill = document.getElementById('progress-bar-fill');
+        var progressText = document.getElementById('progress-text');
+        
+        progressContainer.style.display = 'block';
+        var percentage = Math.round((data.processed / data.total) * 100);
+        progressBarFill.style.width = percentage + '%';
+        progressText.textContent = percentage + '%';
+    });
+</script>
 {% endblock %}
