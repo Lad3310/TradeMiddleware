@@ -160,7 +160,8 @@ def upload_file():
                     raise
             
             db.session.commit()
-            return jsonify({'status': 'success', 'message': 'File processed and transmitted successfully' if success else 'File processed but transmission failed'})
+            message = 'File processed and transmitted successfully' if success else 'File processed but transmission failed after multiple retries'
+            return jsonify({'status': 'success' if success else 'warning', 'message': message})
         except ValueError as e:
             db.session.rollback()
             logging.error(f"Error processing file {file.filename}: {str(e)}")

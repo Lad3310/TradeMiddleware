@@ -5,6 +5,8 @@ from datetime import datetime
 from lxml import etree
 import traceback
 import io
+import time
+import random
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -72,17 +74,30 @@ def process_trade_data(df):
     logging.info("Trade data processed successfully")
     return df[['trade_id', 'symbol', 'quantity', 'price', 'timestamp']]
 
-def simulate_external_api_call(trade_data):
-    # Simulate an API call with potential failures
-    import random
-    success_rate = 0.9  # 90% success rate
-    
-    if random.random() < success_rate:
-        logging.info("External API call successful")
-        return True
-    else:
-        logging.error("External API call failed")
-        return False
+def exponential_backoff(attempt, max_delay=60):
+    delay = min(2 ** attempt, max_delay)
+    jitter = random.uniform(0, 0.1 * delay)
+    return delay + jitter
+
+def simulate_external_api_call(trade_data, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            # Simulate API call with potential failures
+            success_rate = 0.7  # 70% success rate
+            if random.random() < success_rate:
+                logging.info(f"External API call successful on attempt {attempt + 1}")
+                return True
+            else:
+                raise Exception("Simulated API failure")
+        except Exception as e:
+            logging.error(f"External API call failed on attempt {attempt + 1}: {str(e)}")
+            if attempt < max_retries - 1:
+                delay = exponential_backoff(attempt)
+                logging.info(f"Retrying in {delay:.2f} seconds")
+                time.sleep(delay)
+            else:
+                logging.error("Max retries reached. External API call failed.")
+                return False
 
 def process_xml_data(xml_content):
     logging.info("Starting XML data processing")
