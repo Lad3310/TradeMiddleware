@@ -14,7 +14,7 @@ class AuditLog(db.Model):
     filename = db.Column(db.String(128), nullable=False)
     timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())
     status = db.Column(db.String(20), nullable=False)
-    log_file = db.Column(db.String(128), nullable=True)
+    log_file = db.Column(db.String(255), nullable=True)
 
 class ProcessedTrade(db.Model):
     id = db.Column(db.Integer, primary_key=True)
