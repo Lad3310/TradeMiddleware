@@ -1,7 +1,7 @@
 from alembic import op
 import sqlalchemy as sa
 
-# Add these lines
+# revision identifiers, used by Alembic.
 revision = 'manual_add_log_file'
 down_revision = None
 branch_labels = None
