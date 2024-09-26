@@ -1,0 +1,103 @@
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/bin/flask", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/cli.py", line 1105, in main
+    cli.main()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/click/core.py", line 1078, in main
+    rv = self.invoke(ctx)
+         ^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/click/core.py", line 1688, in invoke
+    return _process_result(sub_ctx.command.invoke(sub_ctx))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/click/core.py", line 1688, in invoke
+    return _process_result(sub_ctx.command.invoke(sub_ctx))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/click/core.py", line 1434, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/click/core.py", line 783, in invoke
+    return __callback(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/click/decorators.py", line 33, in new_func
+    return f(get_current_context(), *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/cli.py", line 386, in decorator
+    return ctx.invoke(f, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/click/core.py", line 783, in invoke
+    return __callback(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask_migrate/cli.py", line 109, in migrate
+    _migrate(directory, message, sql, head, splice, branch_label, version_path,
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask_migrate/__init__.py", line 111, in wrapped
+    f(*args, **kwargs)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask_migrate/__init__.py", line 170, in migrate
+    command.revision(config, message, autogenerate=True, sql=sql,
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/command.py", line 236, in revision
+    script_directory.run_env()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/script/base.py", line 582, in run_env
+    util.load_python_file(self.dir, "env.py")
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/util/pyfiles.py", line 95, in load_python_file
+    module = load_module_py(module_id, path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/util/pyfiles.py", line 113, in load_module_py
+    spec.loader.exec_module(module)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/runner/workspace/migrations/env.py", line 113, in <module>
+    run_migrations_online()
+  File "/home/runner/workspace/migrations/env.py", line 107, in run_migrations_online
+    context.run_migrations()
+  File "<string>", line 8, in run_migrations
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/runtime/environment.py", line 946, in run_migrations
+    self.get_context().run_migrations(**kw)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/runtime/migration.py", line 616, in run_migrations
+    for step in self._migrations_fn(heads, self):
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/command.py", line 212, in retrieve_migrations
+    revision_context.run_autogenerate(rev, context)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/autogenerate/api.py", line 570, in run_autogenerate
+    self._run_environment(rev, migration_context, True)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/autogenerate/api.py", line 588, in _run_environment
+    if set(self.script_directory.get_revisions(rev)) != set(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/script/base.py", line 313, in get_revisions
+    self.revision_map.get_revisions(id_),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/script/revision.py", line 542, in get_revisions
+    return sum([self.get_revisions(id_elem) for id_elem in id_], ())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/script/revision.py", line 542, in <listcomp>
+    return sum([self.get_revisions(id_elem) for id_elem in id_], ())
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/script/revision.py", line 544, in get_revisions
+    resolved_id, branch_label = self._resolve_revision_number(id_)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/script/revision.py", line 768, in _resolve_revision_number
+    self._revision_map
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py", line 1141, in __get__
+    obj.__dict__[self.__name__] = result = self.fget(obj)
+                                           ^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/script/revision.py", line 209, in _revision_map
+    for revision in self._generator():
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/script/base.py", line 154, in _load_revisions
+    script = Script._from_filename(self, dir_name, filename)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/script/base.py", line 1044, in _from_filename
+    module = util.load_python_file(dir_, filename)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/util/pyfiles.py", line 95, in load_python_file
+    module = load_module_py(module_id, path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/util/pyfiles.py", line 113, in load_module_py
+    spec.loader.exec_module(module)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/runner/workspace/migrations/versions/manual_add_log_file_column.py", line 3, in <module>
+    from alembic import revision
+ImportError: cannot import name 'revision' from 'alembic' (/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/__init__.py)
