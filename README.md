@@ -25,7 +25,7 @@ Features
 Tech Stack
 
 	•	Frontend:
-	•	HTML, CSS, JavaScript (Vanilla JS), React
+	•	HTML, CSS, JavaScript (Vanilla JS)
 	•	Backend:
 	•	Flask (Python)
 	•	Socket.IO for real-time updates
