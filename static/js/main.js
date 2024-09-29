@@ -157,8 +157,11 @@ function displayProcessedTrades(trades) {
             `).join('')}
         </tbody>
     `;
-    modal.querySelector('.modal-content').appendChild(table);
+    modal.querySelector('.modal-body').appendChild(table);
     document.body.appendChild(modal);
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
 }
 
 function sortTable(table, column, order) {
@@ -189,7 +192,7 @@ function showModal(status, message, details = null) {
             ${details.log_file ? `<p><a href="/download_log/${details.log_file}" target="_blank">Download Processing Log</a></p>` : ''}
         ` : ''}
     `;
-    modal.querySelector('.modal-content').appendChild(content);
+    modal.querySelector('.modal-body').appendChild(content);
     document.body.appendChild(modal);
 
     setTimeout(() => {
@@ -208,11 +211,22 @@ function createModal(title) {
         <div class="modal-content">
             <span class="close">&times;</span>
             <h2>${title}</h2>
+            <div class="modal-body">
+                <!-- Content will be appended here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary close-modal">Close</button>
+            </div>
         </div>
     `;
+
     modal.querySelector('.close').onclick = function() {
         closeModal(modal);
     };
+    modal.querySelector('.close-modal').onclick = function() {
+        closeModal(modal);
+    };
+
     return modal;
 }
 
@@ -257,19 +271,18 @@ function updateDashboardStats(data) {
     if (!statsContainer) return;
 
     statsContainer.innerHTML = `
-        <h3>Upload Statistics</h3>
-        <p>Total Files: ${data.total_files}</p>
-        <p>Successful Uploads: ${data.successful_uploads}</p>
-        <p>Failed Uploads: ${data.failed_uploads}</p>
-        <h3>Recent Uploads</h3>
-        <ul>
-            ${data.recent_uploads.map(upload => `
-                <li>${upload.filename} - ${upload.status} (${upload.timestamp})</li>
-            `).join('')}
-        </ul>
-        ${data.recent_uploads.length > 0 ? `
-            <h3>Latest Upload Status</h3>
-            <p class="${data.recent_uploads[0].status.toLowerCase()}">${data.recent_uploads[0].status}: ${data.recent_uploads[0].filename}</p>
-        ` : ''}
-    `;
-}
+    <h3>Upload Statistics</h3>
+    <p>Total Files: ${data.total_files}</p>
+    <p>Successful Uploads: ${data.successful_uploads}</p>
+    <p>Failed Uploads: ${data.failed_uploads}</p>
+    <h3>Recent Uploads</h3>
+    <ul>
+        ${data.recent_uploads.map(upload => `
+            <li>${upload.filename} - ${upload.status} (${upload.timestamp})</li>
+        `).join('')}
+    </ul>
+    ${data.recent_uploads.length > 0 ? `
+        <h3>Latest Upload Status</h3>
+        <p class="${data.recent_uploads[0].status.toLowerCase()}">${data.recent_uploads[0].status}: ${data.recent_uploads[0].filename}</p>
+    ` : ''}
+`;}

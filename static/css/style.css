@@ -1,3 +1,4 @@
+/* General Styles */
 body {
     font-family: Arial, sans-serif;
     line-height: 1.6;
@@ -57,6 +58,70 @@ nav ul li a {
     background: #555;
 }
 
+/* View Trades Button Styling */
+.view-trades-btn {
+    display: inline-block;
+    background-color: #007bff;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.view-trades-btn:hover {
+    background-color: #0056b3;
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
+}
+
+.view-trades-btn:active {
+    background-color: #004085;
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+}
+
+/* Download Log Button Styling */
+.download-log-btn {
+    display: inline-block;
+    background-color: #28a745; /* A green color to distinguish from the blue "View Trades" button */
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.download-log-btn:hover {
+    background-color: #218838; /* Slightly darker green on hover */
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.2);
+}
+
+.download-log-btn:active {
+    background-color: #1e7e34;
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+}
+
+/* Download Log Link Styling */
+.download-log {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: bold;
+    border-bottom: 2px solid transparent;
+    transition: color 0.3s, border-bottom 0.3s;
+}
+
+.download-log:hover {
+    color: #0056b3;
+    border-bottom: 2px solid #0056b3;
+}
+
 .form-group {
     margin-bottom: 15px;
 }
@@ -74,10 +139,13 @@ nav ul li a {
     font-size: 16px;
 }
 
+/* Table Styles */
 table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 table, th, td {
@@ -98,6 +166,7 @@ th:hover {
     background-color: #e0e0e0;
 }
 
+/* Flash Message Styles */
 .flash-messages {
     padding: 10px;
     margin-bottom: 15px;
@@ -109,6 +178,7 @@ th:hover {
     margin-bottom: 5px;
 }
 
+/* Modal Styles */
 .modal {
     display: none;
     position: fixed;
@@ -165,16 +235,120 @@ th:hover {
     border-top: 5px solid #F44336;
 }
 
+.modal-footer {
+    text-align: right;
+}
+
+/* Dashboard Container */
+.dashboard-container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 40px auto;
+}
+
+/* Dashboard Grid */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+/* Card Styles */
+.card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.welcome-card {
+    grid-column: span 2;
+    text-align: center;
+}
+
+.stats-card, .status-card, .uploads-card, .upload-form-card {
+    grid-column: span 1;
+}
+
+/* Typography */
+h1, h3 {
+    margin-top: 0;
+    color: #333;
+}
+
+p, li {
+    color: #666;
+}
+
+/* Progress Bar */
+.progress-container {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.progress-bar {
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    background-color: #007bff;
+    height: 20px;
+    width: 0%;
+    transition: width 0.3s;
+}
+
+.progress-text {
+    margin-top: 10px;
+    font-size: 16px;
+}
+
+/* Button Styles */
+.btn {
+    display: inline-block;
+    background-color: #007bff;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-decoration: none;
+    text-align: center;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.btn:hover {
+    background-color: #0056b3;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+/* Dashboard Stats */
 #dashboard-stats {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
     background-color: #fff;
     padding: 20px;
     margin-bottom: 20px;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 #dashboard-stats h3 {
     margin-top: 0;
+    font-size: 1.5rem;
+    color: #333;
 }
 
 #dashboard-stats ul {
@@ -186,6 +360,28 @@ th:hover {
     margin-bottom: 5px;
 }
 
+#dashboard-stats .stats-item {
+    flex: 1;
+    min-width: 220px;
+    background-color: #ffffff;
+    padding: 20px;
+    margin: 10px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+#dashboard-st#dashboard-stats .stats-item h3 {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+}
+
+#dashboard-stats .stats-item p {
+    font-size: 1rem;
+    color: #343a40;
+}
+
+/* Persistent Messages */
 .persistent-message {
     display: none;
     position: fixed;
@@ -219,6 +415,37 @@ th:hover {
     color: #F44336;
 }
 
+/* Upload Section */
+.upload-section {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    margin-top: 20px;
+    text-align: center;
+}
+
+.upload-section input[type="file"] {
+    margin: 15px 0;
+}
+
+.upload-section .btn {
+    display: inline-block;
+    background: #28a745;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 16px;
+}
+
+.upload-section .btn:hover {
+    background: #218838;
+}
+
+/* Login Styles */
 .login-container {
     max-width: 400px;
     margin: 0 auto;
@@ -230,6 +457,7 @@ th:hover {
     flex-direction: column;
 }
 
+/* Responsive Styles */
 @media (max-width: 600px) {
     .login-container {
         padding: 10px;
@@ -242,5 +470,15 @@ th:hover {
     .btn {
         font-size: 14px;
         padding: 8px 16px;
+    }
+
+    /* Adjust dashboard grid for mobile */
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Ensure stats items take full width */
+    #dashboard-stats .stats-item {
+        min-width: 100%;
     }
 }

@@ -3,37 +3,67 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<h2>Welcome, {{ current_user.username }}!</h2>
-
-<div id="dashboard-stats">
-    <!-- Dashboard statistics will be loaded here -->
-</div>
-
-<h3>Upload Trade Data</h3>
-<form id="file-upload-form" method="POST" action="{{ url_for('upload_file') }}" enctype="multipart/form-data">
-    <div class="form-group">
-        <label for="file">Select file (CSV, JSON, or XML):</label>
-        <input type="file" id="file" name="file" accept=".csv,.json,.xml" required>
+<div class="dashboard-container">
+    <div class="card welcome-card">
+        <h1>Welcome, {{ current_user.username }}!</h1>
     </div>
-    <button type="submit" class="btn">Upload and Process</button>
-</form>
 
-<div id="progress-container" style="display: none;">
-    <h4>Processing Progress</h4>
-    <div class="progress-bar">
-        <div id="progress-bar-fill" style="width: 0%;"></div>
+    <div class="dashboard-grid">
+        <!-- Upload Statistics Card -->
+        <div class="card stats-card">
+            <h3>Upload Statistics</h3>
+            <div id="upload-statistics">
+                <!-- Stats will be dynamically populated here by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Latest Upload Status Card -->
+        <div class="card status-card">
+            <h3>Latest Upload Status</h3>
+            <div id="latest-upload-status">
+                <!-- Latest upload status will be dynamically populated here by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Recent Uploads Card -->
+        <div class="card uploads-card">
+            <h3>Recent Uploads</h3>
+            <div id="recent-uploads">
+                <!-- Recent uploads will be dynamically populated here by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Upload Trade Data Card -->
+        <div class="card upload-form-card">
+            <h3>Upload Trade Data</h3>
+            <form id="file-upload-form" method="POST" action="{{ url_for('upload_file') }}" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="file">Select file (CSV, JSON, or XML):</label>
+                    <input type="file" id="file" name="file" accept=".csv,.json,.xml" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Upload and Process</button>
+            </form>
+        </div>
     </div>
-    <p id="progress-text">0%</p>
-</div>
 
-<p>
-    <a href="{{ url_for('audit_trail') }}" class="btn">View Audit Trail</a>
-</p>
+    <div id="progress-container" class="progress-container" style="display: none;">
+        <h4>Processing Progress</h4>
+        <div class="progress-bar">
+            <div id="progress-bar-fill" class="progress-bar-fill"></div>
+        </div>
+        <p id="progress-text" class="progress-text">0%</p>
+    </div>
+
+    <div class="actions">
+        <a href="{{ url_for('audit_trail') }}" class="btn btn-secondary">View Audit Trail</a>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 <script>
+    // Initialize WebSocket connection for progress updates
     var socket = io();
     socket.on('processing_progress', function(data) {
         var progressContainer = document.getElementById('progress-container');
@@ -44,6 +74,41 @@
         var percentage = Math.round((data.processed / data.total) * 100);
         progressBarFill.style.width = percentage + '%';
         progressText.textContent = percentage + '%';
+    });
+
+    // Fetch and update the dashboard stats
+    function updateDashboard() {
+        fetch('/api/dashboard_stats')
+            .then(response => response.json())
+            .then(data => {
+                // Update Upload Statistics
+                document.getElementById('upload-statistics').innerHTML = `
+                    <p>Total Files: ${data.total_files}</p>
+                    <p>Successful Uploads: ${data.successful_uploads}</p>
+                    <p>Failed Uploads: ${data.failed_uploads}</p>
+                `;
+
+                // Update Latest Upload Status
+                const latestUpload = data.recent_uploads[0];
+                if (latestUpload) {
+                    document.getElementById('latest-upload-status').innerHTML = `
+                        <p>${latestUpload.status}: ${latestUpload.filename} (${latestUpload.timestamp})</p>
+                    `;
+                } else {
+                    document.getElementById('latest-upload-status').innerHTML = '<p>No uploads available</p>';
+                }
+
+                // Update Recent Uploads
+                const recentUploads = data.recent_uploads.map(upload => `
+                    <li>${upload.filename} - ${upload.status} (${upload.timestamp})</li>
+                `).join('');
+                document.getElementById('recent-uploads').innerHTML = `<ul>${recentUploads}</ul>`;
+            })
+            .catch(error => console.error('Error fetching dashboard stats:', error));
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        updateDashboard();
     });
 </script>
 {% endblock %}

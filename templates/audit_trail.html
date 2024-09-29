@@ -22,7 +22,7 @@
             <td data-column="status">{{ log.status }}</td>
             <td data-column="log_file">
                 {% if log.log_file %}
-                <a href="{{ url_for('download_log', filename=log.log_file) }}">Download Log</a>
+                <a href="{{ url_for('download_log', filename=log.log_file) }}" class="download-log-btn">Download Log</a>
                 {% else %}
                 N/A
                 {% endif %}
@@ -34,4 +34,19 @@
         {% endfor %}
     </tbody>
 </table>
+
+<!-- Modal Structure (Hidden initially, will be shown dynamically) -->
+<div class="modal" id="tradeModal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Processed Trades</h2>
+        <div class="modal-body">
+            <!-- Content will be dynamically added here -->
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary close-modal">Close</button>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
