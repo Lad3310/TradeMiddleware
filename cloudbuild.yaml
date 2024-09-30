@@ -1,10 +1,14 @@
 steps:
-  # Add your build steps here
-  - name: 'gcr.io/cloud-builders/gcloud'
-    args: ['app', 'deploy']
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:397.0.0'
+    entrypoint: 'bash'
+    args: 
+      - '-c'
+      - |
+        gcloud components update
+        gcloud app deploy
 
 options:
   logging: CLOUD_LOGGING_ONLY
-
+  
 # Specify your service account here
 serviceAccount: 'projects/${trademiddleware}/serviceAccounts/Cloud-build-deploy-tm@trademiddleware.iam.gserviceaccount.com'
