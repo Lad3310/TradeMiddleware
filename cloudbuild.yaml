@@ -1,3 +1,10 @@
 steps:
-- name: 'gcr.io/cloud-builders/gcloud'
-  args: ['app', 'deploy', '--quiet']
+  # Add your build steps here
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: ['app', 'deploy']
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+# Specify your service account here
+serviceAccount: 'projects/${trademiddleware}/serviceAccounts/Cloud-build-deploy-tm@trademiddleware.iam.gserviceaccount.com'
