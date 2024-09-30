@@ -3,6 +3,5 @@ runtime: python312
 entrypoint: gunicorn -b :$PORT app:app
 
 
-options:
-  logging: GCS_ONLY
-  default_logs_bucket_behavior: REGIONAL_USER_OWNED_BUCKET
+build_options:
+  logging: CLOUD_LOGGING_ONLY
