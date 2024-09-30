@@ -3,15 +3,6 @@ runtime: python312
 entrypoint: gunicorn -b :$PORT app:app
 
 
-name: Primary
-description: TradeMiddleware GitHub trigger
-github:
-  owner: Lad3310
-  name: TradeMiddleware
-  push:
-    branch: ^main$
-filename: cloudbuild.yaml
-includeBuildLogs: INCLUDE_BUILD_LOGS_WITH_STATUS
-serviceAccount: projects/trademiddleware/serviceAccounts/cloud-build-deploy-tm@trademiddleware.iam.gserviceaccount.com
 options:
-  logging: CLOUD_LOGGING_ONLY
+  logging: GCS_ONLY
+  default_logs_bucket_behavior: REGIONAL_USER_OWNED_BUCKET
