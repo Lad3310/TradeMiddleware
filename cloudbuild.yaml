@@ -1,14 +1,45 @@
 steps:
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:397.0.0'
-    entrypoint: 'bash'
-    args: 
-      - '-c'
-      - |
-        gcloud components update
-        gcloud app deploy
+# Install dependencies
+- name: 'python:3.12'
+  entrypoint: pip
+  args: ['install', '-r', 'requirements.txt', '--user']
+
+# Deploy to App Engine
+- name: 'python:3.12'
+  entrypoint: python
+  args:
+  - '-c'
+  - |
+    import os
+    from google.cloud import appengine_admin_v1
+    from google.cloud.appengine_admin_v1.services.versions import VersionsClient
+
+    project_id = os.environ['PROJECT_ID']
+    client = VersionsClient()
+
+    with open('app.yaml', 'r') as f:
+      config = f.read()
+
+    version = appengine_admin_v1.Version(
+      runtime='python312',
+      handlers=[appengine_admin_v1.UrlMap(
+        url='.*',
+        script=appengine_admin_v1.ScriptHandler(
+          script_path='main.py'
+        )
+      )]
+    )
+
+    operation = client.create_version(
+      parent=f'apps/{project_id}/services/default',
+      version=version
+    )
+
+    print(f"Deploying: {operation.metadata}")
+    result = operation.result()
+    print(f"Deployment finished. Version: {result.name}")
 
 options:
   logging: CLOUD_LOGGING_ONLY
-  
-# Specify your service account here
-serviceAccount: 'projects/${trademiddleware}/serviceAccounts/Cloud-build-deploy-tm@trademiddleware.iam.gserviceaccount.com'
+
+serviceAccount: 'projects/${PROJECT_ID}/serviceAccounts/Cloud-build-deploy-tm@trademiddleware.iam.gserviceaccount.com'
