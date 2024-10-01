@@ -1,11 +1,15 @@
 steps:
 # Install dependencies
-- name: 'python:3.12'
-  entrypoint: pip
-  args: ['install', '-r', 'requirements.txt', '--user']
+- name: 'python:3.12-slim'
+  entrypoint: bash
+  args:
+  - '-c'
+  - |
+    pip install --upgrade pip==23.3.1
+    pip install -r requirements.txt --user
 
 # Deploy to App Engine
-- name: 'python:3.12'
+- name: 'python:3.12-slim'
   entrypoint: python
   args:
   - '-c'
