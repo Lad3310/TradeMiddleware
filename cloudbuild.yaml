@@ -18,7 +18,7 @@ steps:
     from google.cloud import appengine_admin_v1
     from google.cloud.appengine_admin_v1.services.versions import VersionsClient
 
-    project_id = os.environ['PROJECT_ID']
+    project_id = 'trademiddleware'  # Replace with your actual project ID
     client = VersionsClient()
 
     with open('app.yaml', 'r') as f:
@@ -46,4 +46,4 @@ steps:
 options:
   logging: CLOUD_LOGGING_ONLY
 
-serviceAccount: 'projects/${PROJECT_ID}/serviceAccounts/Cloud-build-deploy-tm@trademiddleware.iam.gserviceaccount.com'
+serviceAccount: 'projects/trademiddleware/serviceAccounts/Cloud-build-deploy-tm@trademiddleware.iam.gserviceaccount.com'
