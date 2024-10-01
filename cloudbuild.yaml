@@ -27,7 +27,7 @@ steps:
     version = appengine_admin_v1.Version(
       runtime='python312',
       handlers=[appengine_admin_v1.UrlMap(
-        url='.*',
+        url_regex='.*',
         script=appengine_admin_v1.ScriptHandler(
           script_path='main.py'
         )
