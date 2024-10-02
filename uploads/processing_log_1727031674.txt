@@ -1,0 +1,4 @@
+Processing started for file: sample_trades.xml
+XML Processing Progress: 100.00%
+File processed successfully. Rows: 3. Processing time: 0.00 seconds
+API Simulation Result: {'status': 'failure', 'success_rate': 0.0, 'processed_rows': 0, 'failed_rows': 3, 'total_attempts': 5, 'total_delay': 31.917905561379598, 'message': 'Processed 0/3 rows. 3 rows failed.'}

@@ -1,0 +1,484 @@
+/* General Styles */
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+
+.container {
+    width: 80%;
+    margin: auto;
+    overflow: hidden;
+    padding: 20px;
+}
+
+header {
+    background: #333;
+    color: #fff;
+    padding: 1rem;
+    text-align: center;
+}
+
+nav {
+    background: #444;
+    color: #fff;
+    padding: 0.5rem;
+}
+
+nav ul {
+    padding: 0;
+    list-style: none;
+}
+
+nav ul li {
+    display: inline;
+    margin-right: 10px;
+}
+
+nav ul li a {
+    color: #fff;
+    text-decoration: none;
+}
+
+.btn {
+    display: inline-block;
+    background: #333;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 16px;
+}
+
+.btn:hover {
+    background: #555;
+}
+
+/* View Trades Button Styling */
+.view-trades-btn {
+    display: inline-block;
+    background-color: #007bff;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.view-trades-btn:hover {
+    background-color: #0056b3;
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
+}
+
+.view-trades-btn:active {
+    background-color: #004085;
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+}
+
+/* Download Log Button Styling */
+.download-log-btn {
+    display: inline-block;
+    background-color: #28a745; /* A green color to distinguish from the blue "View Trades" button */
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.download-log-btn:hover {
+    background-color: #218838; /* Slightly darker green on hover */
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.2);
+}
+
+.download-log-btn:active {
+    background-color: #1e7e34;
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+}
+
+/* Download Log Link Styling */
+.download-log {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: bold;
+    border-bottom: 2px solid transparent;
+    transition: color 0.3s, border-bottom 0.3s;
+}
+
+.download-log:hover {
+    color: #0056b3;
+    border-bottom: 2px solid #0056b3;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+/* Table Styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+table, th, td {
+    border: 1px solid #ddd;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+}
+
+th {
+    background-color: #f2f2f2;
+    cursor: pointer;
+}
+
+th:hover {
+    background-color: #e0e0e0;
+}
+
+/* Flash Message Styles */
+.flash-messages {
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    background-color: #f9f9f9;
+}
+
+.flash-message {
+    margin-bottom: 5px;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.modal.show {
+    display: block;
+    opacity: 1;
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 600px;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal.success .modal-content {
+    border-top: 5px solid #4CAF50;
+}
+
+.modal.warning .modal-content {
+    border-top: 5px solid #FFA500;
+}
+
+.modal.error .modal-content {
+    border-top: 5px solid #F44336;
+}
+
+.modal-footer {
+    text-align: right;
+}
+
+/* Dashboard Container */
+.dashboard-container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 40px auto;
+}
+
+/* Dashboard Grid */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+/* Card Styles */
+.card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.welcome-card {
+    grid-column: span 2;
+    text-align: center;
+}
+
+.stats-card, .status-card, .uploads-card, .upload-form-card {
+    grid-column: span 1;
+}
+
+/* Typography */
+h1, h3 {
+    margin-top: 0;
+    color: #333;
+}
+
+p, li {
+    color: #666;
+}
+
+/* Progress Bar */
+.progress-container {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.progress-bar {
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    background-color: #007bff;
+    height: 20px;
+    width: 0%;
+    transition: width 0.3s;
+}
+
+.progress-text {
+    margin-top: 10px;
+    font-size: 16px;
+}
+
+/* Button Styles */
+.btn {
+    display: inline-block;
+    background-color: #007bff;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-decoration: none;
+    text-align: center;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.btn:hover {
+    background-color: #0056b3;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+/* Dashboard Stats */
+#dashboard-stats {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    background-color: #fff;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#dashboard-stats h3 {
+    margin-top: 0;
+    font-size: 1.5rem;
+    color: #333;
+}
+
+#dashboard-stats ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+#dashboard-stats li {
+    margin-bottom: 5px;
+}
+
+#dashboard-stats .stats-item {
+    flex: 1;
+    min-width: 220px;
+    background-color: #ffffff;
+    padding: 20px;
+    margin: 10px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+#dashboard-st#dashboard-stats .stats-item h3 {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+}
+
+#dashboard-stats .stats-item p {
+    font-size: 1rem;
+    color: #343a40;
+}
+
+/* Persistent Messages */
+.persistent-message {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 10px;
+    text-align: center;
+    color: white;
+    font-weight: bold;
+    z-index: 1001;
+}
+
+.persistent-message.success {
+    background-color: #4CAF50;
+}
+
+.persistent-message.warning {
+    background-color: #FFA500;
+}
+
+.persistent-message.error {
+    background-color: #F44336;
+}
+
+#dashboard-stats .success {
+    color: #4CAF50;
+}
+
+#dashboard-stats .failed {
+    color: #F44336;
+}
+
+/* Upload Section */
+.upload-section {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    margin-top: 20px;
+    text-align: center;
+}
+
+.upload-section input[type="file"] {
+    margin: 15px 0;
+}
+
+.upload-section .btn {
+    display: inline-block;
+    background: #28a745;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 16px;
+}
+
+.upload-section .btn:hover {
+    background: #218838;
+}
+
+/* Login Styles */
+.login-container {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Responsive Styles */
+@media (max-width: 600px) {
+    .login-container {
+        padding: 10px;
+    }
+
+    .form-group input {
+        font-size: 14px;
+    }
+
+    .btn {
+        font-size: 14px;
+        padding: 8px 16px;
+    }
+
+    /* Adjust dashboard grid for mobile */
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Ensure stats items take full width */
+    #dashboard-stats .stats-item {
+        min-width: 100%;
+    }
+}

@@ -1,0 +1,1 @@
+Processing started for file: 20trades.csv
