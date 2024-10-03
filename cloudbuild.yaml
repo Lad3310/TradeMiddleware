@@ -34,10 +34,12 @@ steps:
       )]
     )
 
-    operation = client.create_version(
+    request = appengine_admin_v1.CreateVersionRequest(
       parent=f'apps/{project_id}/services/default',
       version=version
     )
+
+    operation = client.create_version(request=request)
 
     print(f"Deploying: {operation.metadata}")
     result = operation.result()
