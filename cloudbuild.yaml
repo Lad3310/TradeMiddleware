@@ -15,12 +15,13 @@ steps:
   args:
     - '-c'
     - |
-      import os
       from google.cloud import appengine_admin_v1
       from google.cloud.appengine_admin_v1.services.versions import VersionsClient
       from google.cloud.appengine_admin_v1.types import CreateVersionRequest, Version, UrlMap, ScriptHandler
 
-      project_id = 'trademiddleware'  # Replace with your project ID
+      project_id = 'trademiddleware'  # Replace with your actual project ID
+      service_id = 'default'  # Replace with the correct service name if different
+
       client = VersionsClient()
 
       # Define the App Engine version details
@@ -32,17 +33,17 @@ steps:
         )]
       )
 
-      # Create the request object
+      # Create the request object with parent and version
       request = CreateVersionRequest(
-        parent=f'apps/{project_id}/services/default',
+        parent=f'apps/{project_id}/services/{service_id}',  # Parent needs to be defined in request
         version=version
       )
 
-      # Call create_version and wait for the operation to complete
+      # Call create_version and handle the operation
       operation = client.create_version(request=request)
       print(f"Deploying... Operation metadata: {operation.metadata}")
 
-      # Wait for the deployment to complete
+      # Wait for the operation to complete and print result
       result = operation.result()
       print(f"Deployment finished. Version: {result.name}")
 
