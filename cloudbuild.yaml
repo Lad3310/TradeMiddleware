@@ -1,49 +1,50 @@
 steps:
-# Install dependencies
+# Step 1: Install dependencies
 - name: 'python:3.12-slim'
   entrypoint: bash
   args:
-  - '-c'
-  - |
-    pip install --upgrade pip==23.3.1
-    pip install -r requirements.txt --user
+    - '-c'
+    - |
+      pip install --upgrade pip==23.3.1
+      pip install -r requirements.txt --user
+      pip install google-cloud-appengine-admin>=1.0.0
 
-# Deploy to App Engine
+# Step 2: Deploy to App Engine
 - name: 'python:3.12-slim'
   entrypoint: python
   args:
-  - '-c'
-  - |
-    import os
-    from google.cloud import appengine_admin_v1
-    from google.cloud.appengine_admin_v1.services.versions import VersionsClient
+    - '-c'
+    - |
+      import os
+      from google.cloud import appengine_admin_v1
+      from google.cloud.appengine_admin_v1.services.versions import VersionsClient
+      from google.cloud.appengine_admin_v1.types import CreateVersionRequest, Version, UrlMap, ScriptHandler
 
-    project_id = 'trademiddleware'  # Replace with your actual project ID
-    client = VersionsClient()
+      project_id = 'trademiddleware'  # Replace with your project ID
+      client = VersionsClient()
 
-    with open('app.yaml', 'r') as f:
-      config = f.read()
+      # Define the App Engine version details
+      version = Version(
+        runtime='python312',
+        handlers=[UrlMap(
+          url_regex='.*',
+          script=ScriptHandler(script_path='main.py')
+        )]
+      )
 
-    version = appengine_admin_v1.Version(
-      runtime='python312',
-      handlers=[appengine_admin_v1.UrlMap(
-        url_regex='.*',
-        script=appengine_admin_v1.ScriptHandler(
-          script_path='main.py'
-        )
-      )]
-    )
+      # Create the request object
+      request = CreateVersionRequest(
+        parent=f'apps/{project_id}/services/default',
+        version=version
+      )
 
-    request = appengine_admin_v1.CreateVersionRequest(
-      parent=f'apps/{project_id}/services/default',
-      version=version
-    )
+      # Call create_version and wait for the operation to complete
+      operation = client.create_version(request=request)
+      print(f"Deploying... Operation metadata: {operation.metadata}")
 
-    operation = client.create_version(request=request)
-
-    print(f"Deploying: {operation.metadata}")
-    result = operation.result()
-    print(f"Deployment finished. Version: {result.name}")
+      # Wait for the deployment to complete
+      result = operation.result()
+      print(f"Deployment finished. Version: {result.name}")
 
 options:
   logging: CLOUD_LOGGING_ONLY
