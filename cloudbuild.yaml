@@ -9,20 +9,22 @@ steps:
       pip install -r requirements.txt --user
       pip install google-cloud-appengine-admin>=1.0.0
 
-# Step 2: Deploy to App Engine
+# Step 2: Deploy to App Engine using AppEngineClient
 - name: 'python:3.12-slim'
   entrypoint: python
   args:
     - '-c'
     - |
       from google.cloud import appengine_admin_v1
-      from google.cloud.appengine_admin_v1.services.versions import VersionsClient
-      from google.cloud.appengine_admin_v1.types import CreateVersionRequest, Version, UrlMap, ScriptHandler
+      from google.cloud.appengine_admin_v1.services.applications import ApplicationsClient
+      from google.cloud.appengine_admin_v1.types import Version, UrlMap, ScriptHandler
 
       project_id = 'trademiddleware'  # Replace with your actual project ID
-      service_id = 'default'  # Replace with the correct service name if different
+      service_id = 'default'  # Replace with your service ID, if different
+      app_id = f'apps/{project_id}'
 
-      client = VersionsClient()
+      # Initialize the App Engine Client
+      client = appengine_admin_v1.ApplicationsClient()
 
       # Define the App Engine version details
       version = Version(
@@ -33,17 +35,14 @@ steps:
         )]
       )
 
-      # Create the request object with parent and version
-      request = CreateVersionRequest(
-        parent=f'apps/{project_id}/services/{service_id}',  # Parent needs to be defined in request
-        version=version
+      # Try creating a new version by updating the Application
+      operation = client.update_application(
+          application=app_id,
+          update_mask={"version": version}
       )
-
-      # Call create_version and handle the operation
-      operation = client.create_version(request=request)
-      print(f"Deploying... Operation metadata: {operation.metadata}")
-
+      
       # Wait for the operation to complete and print result
+      print(f"Deploying... Operation metadata: {operation.metadata}")
       result = operation.result()
       print(f"Deployment finished. Version: {result.name}")
 
